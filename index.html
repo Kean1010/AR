@@ -41,7 +41,7 @@
       id="carousel"
       class="flex space-x-6 overflow-x-auto snap-x snap-mandatory w-full px-6 py-4"
     >
-      <!-- Cards are dynamically generated here -->
+      <!-- Cards dynamically added via JavaScript -->
     </div>
 
     <!-- Right Button -->
@@ -63,7 +63,7 @@
       { color: 'bg-orange-500', text: 'Our SG Culture', textColor: 'text-white' }
     ];
 
-    // Map text to link
+    // Add links
     cardData.forEach(data => data.link = {
       'Spot the Difference': 'Game2.html',
       'Virtual Tours': 'VR.html',
@@ -72,26 +72,34 @@
       'Our SG Culture': 'quiz.html'
     }[data.text]);
 
-    const cardWidth = 300 + 24; // card width + spacing
-    const clonesPerSide = 2; // Number of times to repeat cards on each side
+    const cardWidth = 300 + 24; // width + margin
+    const clones = 2; // clones on each side
 
-    // Create and append card elements
     function createCards() {
-      for (let i = 0; i < clonesPerSide * 2 + 1; i++) {
-        cardData.forEach(data => {
-          const card = document.createElement('div');
-          card.className = `card snap-center min-w-[300px] h-[400px] ${data.color} ${data.textColor} rounded-3xl shadow-xl flex items-center justify-center text-2xl font-bold cursor-pointer`;
-          card.textContent = data.text;
-          card.setAttribute('data-link', data.link);
-
-          card.addEventListener('click', () => {
-            const link = card.getAttribute('data-link');
-            if (link) window.location.href = link;
-          });
-
-          carousel.appendChild(card);
-        });
+      // Clone left
+      for (let i = 0; i < clones; i++) {
+        cardData.forEach(data => addCard(data, true));
       }
+      // Original cards
+      cardData.forEach(data => addCard(data));
+      // Clone right
+      for (let i = 0; i < clones; i++) {
+        cardData.forEach(data => addCard(data, true));
+      }
+    }
+
+    function addCard(data, isClone = false) {
+      const card = document.createElement('div');
+      card.className = `card snap-center min-w-[300px] h-[400px] ${data.color} ${data.textColor} rounded-3xl shadow-xl flex items-center justify-center text-2xl font-bold cursor-pointer`;
+      card.textContent = data.text;
+      card.setAttribute('data-link', data.link);
+      if (isClone) card.setAttribute('data-clone', 'true');
+
+      card.addEventListener('click', () => {
+        if (!isClone) window.location.href = data.link;
+      });
+
+      carousel.appendChild(card);
     }
 
     createCards();
@@ -115,16 +123,19 @@
     }
 
     function loopScroll() {
-      const singleSetWidth = cardWidth * cardData.length;
-      const totalClonedWidth = singleSetWidth * (clonesPerSide * 2 + 1);
-      const scrollLeft = carousel.scrollLeft;
+      const totalCards = cardData.length;
+      const totalScrollWidth = carousel.scrollWidth;
+      const originalWidth = totalCards * cardWidth;
+      const clonesWidth = totalCards * cardWidth * clones;
 
-      if (scrollLeft < singleSetWidth * 0.5) {
-        // Scrolled too far left, jump forward
-        carousel.scrollLeft += singleSetWidth * clonesPerSide;
-      } else if (scrollLeft > totalClonedWidth - singleSetWidth * 1.5) {
-        // Scrolled too far right, jump back
-        carousel.scrollLeft -= singleSetWidth * clonesPerSide;
+      // Near the start
+      if (carousel.scrollLeft < clonesWidth * 0.5) {
+        carousel.scrollLeft += originalWidth;
+      }
+
+      // Near the end
+      if (carousel.scrollLeft > totalScrollWidth - clonesWidth * 0.5) {
+        carousel.scrollLeft -= originalWidth;
       }
     }
 
@@ -137,16 +148,16 @@
     leftBtn.addEventListener('click', () => scrollByCard(-1));
     rightBtn.addEventListener('click', () => scrollByCard(1));
 
-    // Scroll to middle set on load
     window.onload = () => {
       requestAnimationFrame(() => {
-        carousel.scrollLeft = cardWidth * cardData.length * clonesPerSide;
+        // Scroll to middle (start of original cards)
+        carousel.scrollLeft = cardData.length * cardWidth * clones;
         updateRotation();
       });
     };
   </script>
 
-  <!-- Footer -->
+  <!-- Footer with smaller font -->
   <div class="fixed bottom-0 w-full bg-red-600 text-white text-center py-4 text-xl font-bold shadow-md z-50">
     brought to you by ITE College West: Red Dot Rewind
   </div>
