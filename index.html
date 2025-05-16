@@ -2,93 +2,76 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>MindAR Video Overlay</title>
+  <title>MindAR Video Overlay (CSS3D)</title>
   <script src="https://cdn.jsdelivr.net/npm/three@0.131.3/build/three.min.js"></script>
+  <!-- CSS3DRenderer (from Three.js examples) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.131.3/examples/js/renderers/CSS3DRenderer.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
-
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      height: 100%;
-      background: black;
-    }
-    #ar-container {
-      width: 100%;
-      height: 100%;
-    }
+    html, body { margin:0; padding:0; overflow:hidden; height:100%; background:#000; }
+    #ar-container { position:absolute; top:0; left:0; width:100%; height:100%; }
     #start-button {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      padding: 10px 20px;
-      font-size: 16px;
-      background: #2196f3;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+      position:absolute; top:20px; left:50%; transform:translateX(-50%);
+      z-index:10; padding:20px 40px; font-size:20px;
+      background:#2196f3; color:#fff; border:none; border-radius:6px;
+      cursor:pointer;
     }
   </style>
 </head>
 <body>
-
-  <button id="start-button">Start AR2</button>
+  <button id="start-button">Start AR</button>
   <div id="ar-container"></div>
 
   <script>
-    const startButton = document.getElementById('start-button');
+    const btn = document.getElementById('start-button');
+    btn.addEventListener('click', async () => {
+      btn.style.display = 'none';
 
-    startButton.addEventListener('click', async () => {
-      startButton.style.display = 'none';
-
-      // Load the video
+      // 1️⃣ create & preload your video element
       const video = document.createElement('video');
-      video.src = 'video.mp4'; // make sure video.mp4 is in same folder
+      video.src = 'video.mp4';
       video.loop = true;
       video.muted = true;
-      video.setAttribute('playsinline', '');
-      video.setAttribute('webkit-playsinline', '');
+      video.setAttribute('playsinline','');
+      video.setAttribute('webkit-playsinline','');
+      await new Promise(r => video.onloadeddata = r);
 
-      // Wait for video to load metadata (ensures texture won't be null)
-      await new Promise((resolve) => {
-        video.onloadeddata = () => resolve();
-      });
-
+      // 2️⃣ set up MindAR + Three.js
       const mindarThree = new window.MINDAR.IMAGE.MindARThree({
-        container: document.querySelector("#ar-container"),
-        imageTargetSrc: "targets.mind", // ensure this file exists
+        container: document.querySelector('#ar-container'),
+        imageTargetSrc: 'targets.mind',
       });
-
       const { renderer, scene, camera } = mindarThree;
 
+      // 3️⃣ add your marker anchor
       const anchor = mindarThree.addAnchor(0);
 
-      // Create video texture and plane only after video is ready
-      const texture = new THREE.VideoTexture(video);
-      const geometry = new THREE.PlaneGeometry(1, 0.5625); // 16:9 aspect ratio
-      const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-      const videoPlane = new THREE.Mesh(geometry, material);
+      // 4️⃣ create CSS3DRenderer and add it
+      const cssRenderer = new THREE.CSS3DRenderer();
+      cssRenderer.domElement.style.position = 'absolute';
+      cssRenderer.domElement.style.top = '0';
+      cssRenderer.setSize(window.innerWidth, window.innerHeight);
+      cssRenderer.domElement.style.pointerEvents = 'none';  // let touch pass through
+      document.body.appendChild(cssRenderer.domElement);
 
-      anchor.group.add(videoPlane);
+      // 5️⃣ wrap the <video> in a CSS3DObject and attach to your anchor
+      const cssObj = new THREE.CSS3DObject(video);
+      // match the marker’s size in Three.js units (here we assume a 16:9 marker → 1 × 0.5625)
+      cssObj.scale.set(1, 0.5625, 1);
+      // orient so it lies flat on the marker:
+      cssObj.rotation.x = -Math.PI / 2;
+      anchor.group.add(cssObj);
 
-      anchor.onTargetFound = () => {
-        video.play();
-        console.log("Target found: playing video");
-      };
+      // 6️⃣ play/pause on detection events
+      anchor.onTargetFound = () => video.play();
+      anchor.onTargetLost  = () => video.pause();
 
-      anchor.onTargetLost = () => {
-        video.pause();
-        console.log("Target lost: pausing video");
-      };
-
+      // 7️⃣ start AR and render both scenes each frame
       await mindarThree.start();
       renderer.setAnimationLoop(() => {
         renderer.render(scene, camera);
+        cssRenderer.render(scene, camera);
       });
     });
   </script>
