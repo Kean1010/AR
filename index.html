@@ -3,27 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Camera Toggle App</title>
+  <title>AR Video Scanner</title>
   <style>
     body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
       margin: 0;
+      overflow: hidden;
       font-family: Arial, sans-serif;
       background-color: #f0f0f0;
     }
-    video {
-      width: 100%;
-      max-width: 600px;
-      border: 2px solid #333;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      background-color: black;
-    }
-    button {
+    #toggleCamera {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
       padding: 10px 20px;
       font-size: 16px;
       background-color: #007bff;
@@ -31,23 +23,35 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      z-index: 1000;
     }
-    button:hover {
+    #toggleCamera:hover {
       background-color: #0056b3;
     }
-    button:disabled {
+    #toggleCamera:disabled {
       background-color: #cccccc;
       cursor: not-allowed;
+    }
+    a-scene {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    video {
+      object-fit: cover;
     }
   </style>
 </head>
 <body>
-  <video id="camera" autoplay playsinline></video>
   <button id="toggleCamera">Turn On Camera</button>
 
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ar.js@2.2.2/aframe/build/aframe-ar-nft.min.js"></script>
   <script>
-    const video = document.getElementById('camera');
     const toggleButton = document.getElementById('toggleCamera');
+    let scene = null;
     let stream = null;
 
     async function startCamera() {
@@ -55,7 +59,38 @@
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' } // Use rear camera
         });
-        video.srcObject = stream;
+
+        // Create A-Frame scene dynamically
+        scene = document.createElement('a-scene');
+        scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false;');
+        scene.setAttribute('embedded', '');
+
+        // Add NFT marker and video
+        const marker = document.createElement('a-nft');
+        marker.setAttribute('type', 'nft');
+        marker.setAttribute('url', 'https://your-server.com/marker/marker'); // Replace with your marker files URL (without .fset, .iset, .fset3)
+        marker.setAttribute('smooth', 'true');
+        marker.setAttribute('smoothCount', '10');
+        marker.setAttribute('smoothTolerance', '0.01');
+        marker.setAttribute('smoothThreshold', '5');
+
+        const video = document.createElement('a-video');
+        video.setAttribute('src', 'https://your-server.com/videos/your-video.mp4'); // Replace with your video URL
+        video.setAttribute('width', '4'); // Adjust size based on marker
+        video.setAttribute('height', '3');
+        video.setAttribute('position', '0 0 0');
+        video.setAttribute('rotation', '0 0 0');
+        video.setAttribute('autoplay', 'true');
+
+        marker.appendChild(video);
+        scene.appendChild(marker);
+
+        // Add camera entity
+        const camera = document.createElement('a-entity');
+        camera.setAttribute('camera', '');
+        scene.appendChild(camera);
+
+        document.body.appendChild(scene);
         toggleButton.textContent = 'Turn Off Camera';
       } catch (err) {
         console.error('Error accessing camera:', err);
@@ -66,10 +101,13 @@
     function stopCamera() {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
         stream = null;
-        toggleButton.textContent = 'Turn On Camera';
       }
+      if (scene) {
+        scene.remove();
+        scene = null;
+      }
+      toggleButton.textContent = 'Turn On Camera';
     }
 
     toggleButton.addEventListener('click', () => {
