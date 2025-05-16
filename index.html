@@ -1,65 +1,96 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8" />
-  <title>AR Video Overlay</title>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.131.3/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
-  <style>
-    body, html {
-      margin: 0;
-      overflow: hidden;
-    }
-    #start-button {
-      position: absolute;
-      z-index: 10;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 20px;
-      font-size: 16px;
-      background: #2196f3;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <button id="start-button">Start AR1</button>
-  <video id="video" src="video.mp4" style="display:none;" loop></video>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AR Video Overlay</title>
 
-  <script>
-    document.querySelector("#start-button").addEventListener("click", async () => {
-      document.querySelector("#start-button").style.display = "none";
+    <!-- Importing required scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.131.3/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
 
-      const mindarThree = new window.MINDAR.IMAGE.MindARThree({
-        container: document.body,
-        imageTargetSrc: "targets.mind",
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: sans-serif;
+        background: black;
+      }
+
+      canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      #start-button {
+        position: absolute;
+        z-index: 10;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 24px;
+        background: #006eff;
+        color: white;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      #video {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="start-button">Start AR</button>
+    <video id="video" src="video.mp4" loop playsinline webkit-playsinline></video>
+
+    <script>
+      document.querySelector("#start-button").addEventListener("click", async () => {
+        document.querySelector("#start-button").style.display = "none";
+
+        const mindarThree = new window.MINDAR.IMAGE.MindARThree({
+          container: document.body,
+          imageTargetSrc: "targets.mind",
+        });
+
+        const { renderer, scene, camera } = mindarThree;
+        const anchor = mindarThree.addAnchor(0);
+
+        // Prepare video texture
+        const video = document.querySelector("#video");
+        const videoTexture = new THREE.VideoTexture(video);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
+
+        // Plane geometry and material
+        const geometry = new THREE.PlaneGeometry(1.5, 0.85); // Adjust size here
+        const material = new THREE.MeshBasicMaterial({ map: videoTexture });
+        const plane = new THREE.Mesh(geometry, material);
+
+        anchor.group.add(plane);
+
+        anchor.onTargetFound = () => {
+          video.play();
+        };
+
+        anchor.onTargetLost = () => {
+          video.pause();
+        };
+
+        await mindarThree.start();
+        renderer.setAnimationLoop(() => {
+          renderer.render(scene, camera);
+        });
       });
-
-      const { renderer, scene, camera } = mindarThree;
-      const anchor = mindarThree.addAnchor(0);
-
-      const video = document.querySelector("#video");
-      const videoTexture = new THREE.VideoTexture(video);
-
-      const geometry = new THREE.PlaneGeometry(1, 0.5625);
-      const material = new THREE.MeshBasicMaterial({ map: videoTexture });
-      const plane = new THREE.Mesh(geometry, material);
-
-      anchor.group.add(plane);
-
-      anchor.onTargetFound = () => video.play();
-      anchor.onTargetLost = () => video.pause();
-
-      await mindarThree.start();
-      renderer.setAnimationLoop(() => {
-        renderer.render(scene, camera);
-      });
-    });
-  </script>
-</body>
+    </script>
+  </body>
 </html>
