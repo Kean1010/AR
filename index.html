@@ -63,7 +63,10 @@
         try {
           const mindarThree = new window.MINDAR.IMAGE.MindARThree({
             container: arContainer,
-            imageTargetSrc: "targets.mind"
+            imageTargetSrc: "targets.mind",
+            cameraConfig: {
+              facingMode: { exact: "environment" } // Force rear camera
+            }
           });
 
           const { renderer, scene, camera } = mindarThree;
@@ -71,7 +74,7 @@
           const anchor = mindarThree.addAnchor(0);
           const video = document.getElementById("ar-video");
           const texture = new THREE.VideoTexture(video);
-          const geometry = new THREE.PlaneGeometry(1, 0.5625); // 16:9
+          const geometry = new THREE.PlaneGeometry(1, 0.5625); // 16:9 ratio
           const material = new THREE.MeshBasicMaterial({ map: texture });
           const plane = new THREE.Mesh(geometry, material);
           anchor.group.add(plane);
