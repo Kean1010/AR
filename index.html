@@ -29,13 +29,8 @@
     SG60: Reconnect the Dots
   </div>
 
-  <!-- Carousel with Left/Right Buttons -->
-  <div class="relative flex items-center justify-center w-full max-w-6xl py-10 px-6">
-    <!-- Left Button -->
-    <button id="leftBtn" class="absolute left-0 z-10 bg-white shadow-lg p-2 rounded-full hover:bg-gray-200">
-      ⬅️
-    </button>
-
+  <!-- Carousel (no buttons) -->
+  <div class="flex items-center justify-center w-full max-w-6xl py-10 px-6">
     <!-- Carousel -->
     <div
       id="carousel"
@@ -43,17 +38,10 @@
     >
       <!-- Cards dynamically added via JavaScript -->
     </div>
-
-    <!-- Right Button -->
-    <button id="rightBtn" class="absolute right-0 z-10 bg-white shadow-lg p-2 rounded-full hover:bg-gray-200">
-      ➡️
-    </button>
   </div>
 
   <script>
     const carousel = document.getElementById('carousel');
-    const leftBtn = document.getElementById('leftBtn');
-    const rightBtn = document.getElementById('rightBtn');
 
     const cardData = [
       { color: 'bg-red-500', text: 'Spot the Difference', textColor: 'text-white' },
@@ -104,10 +92,6 @@
 
     createCards();
 
-    function scrollByCard(count) {
-      carousel.scrollLeft += cardWidth * count;
-    }
-
     function updateRotation() {
       const center = carousel.scrollLeft + carousel.offsetWidth / 2;
       const cards = carousel.querySelectorAll('.card');
@@ -128,12 +112,10 @@
       const originalWidth = totalCards * cardWidth;
       const clonesWidth = totalCards * cardWidth * clones;
 
-      // Near the start
       if (carousel.scrollLeft < clonesWidth * 0.5) {
         carousel.scrollLeft += originalWidth;
       }
 
-      // Near the end
       if (carousel.scrollLeft > totalScrollWidth - clonesWidth * 0.5) {
         carousel.scrollLeft -= originalWidth;
       }
@@ -145,12 +127,8 @@
       carousel._loopTimer = setTimeout(loopScroll, 60);
     });
 
-    leftBtn.addEventListener('click', () => scrollByCard(-1));
-    rightBtn.addEventListener('click', () => scrollByCard(1));
-
     window.onload = () => {
       requestAnimationFrame(() => {
-        // Scroll to middle (start of original cards)
         carousel.scrollLeft = cardData.length * cardWidth * clones;
         updateRotation();
       });
@@ -158,7 +136,7 @@
   </script>
 
   <!-- Footer with smaller font -->
-  <div class="fixed bottom-0 w-full bg-red-600 text-white text-center py-4 text-xl font-bold shadow-md z-50">
+  <div class="fixed bottom-0 w-full bg-red-600 text-white text-center py-4 text-lg font-bold shadow-md z-50">
     brought to you by ITE College West: Red Dot Rewind
   </div>
 </body>
