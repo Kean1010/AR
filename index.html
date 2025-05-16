@@ -1,139 +1,122 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <title>AR Video Demo</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/three@0.131.3/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
-
+  <title>AR Video Tracking</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar-js@1.2.5/dist/mindar-image-three.prod.js"></script>
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
       overflow: hidden;
-      height: 100%;
-      background-color: black;
-      font-family: sans-serif;
     }
-
     #ar-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    #controls {
-      position: absolute;
-      top: 20px;
-      width: 100%;
-      text-align: center;
-      z-index: 10;
-    }
-
-    #toggle-button {
-      padding: 30px 60px;
-      font-size: 28px;
-      background-color: #2196f3;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #video-player {
-      position: fixed;
-      top: 0;
-      left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: cover;
+    }
+    #toggle-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      padding: 10px;
+      font-size: 16px;
+    }
+    #video-player {
       display: none;
-      z-index: 999;
     }
   </style>
 </head>
 <body>
-
-  <div id="controls">
-    <button id="toggle-button">Start Camera</button>
-  </div>
-
-  <video id="video-player" src="video.mp4" loop playsinline webkit-playsinline controls></video>
+  <button id="toggle-button">Start Camera</button>
   <div id="ar-container"></div>
+  <video id="video-player" src="your-video.mp4" loop></video>
+  <script>
+    const toggleButton = document.getElementById("toggle-button");
+    const videoPlayer = document.getElementById("video-player");
+    const arContainer = document.getElementById("ar-container");
 
-<script>
-  const toggleButton = document.getElementById("toggle-button");
-  const videoPlayer = document.getElementById("video-player");
-  const arContainer = document.getElementById("ar-container");
+    let mindarThree = null;
+    let started = false;
+    let hiddenCameraElements = [];
 
-  let mindarThree = null;
-  let started = false;
-  let hiddenCameraElements = [];
+    toggleButton.addEventListener("click", async () => {
+      if (!started) {
+        toggleButton.textContent = "Stop Camera";
 
-  toggleButton.addEventListener("click", async () => {
-    if (!started) {
-      toggleButton.textContent = "Stop Camera";
-
-      mindarThree = new window.MINDAR.IMAGE.MindARThree({
-        container: arContainer,
-        imageTargetSrc: "targets.mind"
-      });
-
-      const { renderer, scene, camera, video } = mindarThree;
-      const anchor = mindarThree.addAnchor(0);
-
-      anchor.onTargetFound = () => {
-        videoPlayer.style.display = "block";
-        videoPlayer.play();
-
-        // Hide camera feed: canvas and video elements
-        hiddenCameraElements = arContainer.querySelectorAll("canvas, video");
-        hiddenCameraElements.forEach(el => {
-          el.style.display = "none";
+        mindarThree = new window.MINDAR.IMAGE.MindARThree({
+          container: arContainer,
+          imageTargetSrc: "targets.mind"
         });
-      };
 
-      anchor.onTargetLost = () => {
+        const { renderer, scene, camera } = mindarThree;
+        const anchor = mindarThree.addAnchor(0);
+
+        // Create a video texture from the video element
+        const videoTexture = new THREE.VideoTexture(videoPlayer);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+
+        // Create a material with the video texture
+        const videoMaterial = new THREE.MeshBasicMaterial({
+          map: videoTexture,
+          side: THREE.DoubleSide
+        });
+
+        // Create a plane geometry for the video (16:9 aspect ratio)
+        const videoGeometry = new THREE.PlaneGeometry(1, 0.5625);
+        const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
+
+        // Add a simple frame around the video
+        const frameGeometry = new THREE.BoxGeometry(1.1, 0.6625, 0.05);
+        const frameMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
+        frameMesh.position.set(0, 0, -0.01);
+
+        // Add video and frame to the anchor
+        anchor.group.add(videoMesh);
+        anchor.group.add(frameMesh);
+
+        anchor.onTargetFound = () => {
+          videoPlayer.play();
+
+          // Hide the camera feed
+          hiddenCameraElements = arContainer.querySelectorAll("canvas, video");
+          hiddenCameraElements.forEach(el => {
+            el.style.display = "none";
+          });
+        };
+
+        anchor.onTargetLost = () => {
+          videoPlayer.pause();
+
+          // Show the camera feed
+          hiddenCameraElements.forEach(el => {
+            el.style.display = "block";
+          });
+        };
+
+        await mindarThree.start();
+        started = true;
+
+        renderer.setAnimationLoop(() => {
+          renderer.render(scene, camera);
+        });
+      } else {
+        toggleButton.textContent = "Start Camera";
+
         videoPlayer.pause();
-        videoPlayer.style.display = "none";
 
-        // Show AR camera feed again
-        hiddenCameraElements.forEach(el => {
-          el.style.display = "block";
-        });
-      };
+        if (hiddenCameraElements.length > 0) {
+          hiddenCameraElements.forEach(el => {
+            el.style.display = "block";
+          });
+        }
 
-      await mindarThree.start();
-      started = true;
-
-      renderer.setAnimationLoop(() => {
-        renderer.render(scene, camera);
-      });
-    } else {
-      toggleButton.textContent = "Start Camera";
-
-      videoPlayer.pause();
-      videoPlayer.style.display = "none";
-
-      if (hiddenCameraElements.length > 0) {
-        hiddenCameraElements.forEach(el => {
-          el.style.display = "block";
-        });
+        await mindarThree.stop();
+        mindarThree = null;
+        started = false;
       }
-
-      await mindarThree.stop();
-      mindarThree = null;
-      started = false;
-    }
-  });
-</script>
-
-
+    });
+  </script>
 </body>
 </html>
