@@ -44,19 +44,6 @@
       border-radius: 6px;
       cursor: pointer;
     }
-
-    #video-player {
-      position: absolute;
-      top: 100px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 640px;
-      display: none;
-      z-index: 10;
-      border: 2px solid white;
-      border-radius: 8px;
-    }
   </style>
 </head>
 <body>
@@ -65,20 +52,26 @@
     <button id="toggle-button">Start Camera</button>
   </div>
 
-  <video id="video-player" src="video.mp4" loop playsinline webkit-playsinline controls></video>
   <div id="ar-container"></div>
 
   <script>
     const toggleButton = document.getElementById("toggle-button");
-    const videoPlayer = document.getElementById("video-player");
     const arContainer = document.getElementById("ar-container");
+
+    // Create video element dynamically
+    const videoPlayer = document.createElement("video");
+    videoPlayer.src = "video.mp4";
+    videoPlayer.loop = true;
+    videoPlayer.muted = true; // muted for autoplay
+    videoPlayer.playsInline = true;
+    videoPlayer.setAttribute("webkit-playsinline", "true");
+    videoPlayer.crossOrigin = "anonymous"; // allow cross-origin video if needed
 
     let mindarThree = null;
     let started = false;
 
     toggleButton.addEventListener("click", async () => {
       if (!started) {
-        // Start AR
         toggleButton.textContent = "Stop Camera";
 
         mindarThree = new window.MINDAR.IMAGE.MindARThree({
@@ -89,14 +82,28 @@
         const { renderer, scene, camera } = mindarThree;
         const anchor = mindarThree.addAnchor(0);
 
+        // Create video texture
+        const videoTexture = new THREE.VideoTexture(videoPlayer);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
+
+        // Adjust size based on your image target (example: 1 x 0.5625 for 16:9)
+        const geometry = new THREE.PlaneGeometry(1, 0.5625);
+        const material = new THREE.MeshBasicMaterial({ map: videoTexture });
+        const videoMesh = new THREE.Mesh(geometry, material);
+
+        // Optional: tweak rotation if needed to match orientation
+        videoMesh.rotation.x = -Math.PI / 2;
+
+        anchor.group.add(videoMesh);
+
         anchor.onTargetFound = () => {
-          videoPlayer.style.display = "block";
           videoPlayer.play();
         };
 
         anchor.onTargetLost = () => {
           videoPlayer.pause();
-          videoPlayer.style.display = "none";
         };
 
         await mindarThree.start();
@@ -105,11 +112,10 @@
         renderer.setAnimationLoop(() => {
           renderer.render(scene, camera);
         });
+
       } else {
-        // Stop AR
         toggleButton.textContent = "Start Camera";
         videoPlayer.pause();
-        videoPlayer.style.display = "none";
         await mindarThree.stop();
         mindarThree = null;
         started = false;
