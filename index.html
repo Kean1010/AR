@@ -14,6 +14,8 @@
     #carousel {
       scroll-behavior: smooth;
       scrollbar-width: none;
+      -ms-overflow-style: none;
+      touch-action: pan-x;
     }
 
     #carousel::-webkit-scrollbar {
@@ -48,101 +50,105 @@
     </button>
   </div>
 
-<script>
-  const carousel = document.getElementById('carousel');
-  const leftBtn = document.getElementById('leftBtn');
-  const rightBtn = document.getElementById('rightBtn');
+  <script>
+    const carousel = document.getElementById('carousel');
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
 
-  const cardData = [
-    { color: 'bg-red-500', text: 'Spot the Difference', textColor: 'text-white' },
-    { color: 'bg-green-500', text: 'Virtual Tours', textColor: 'text-white' },
-    { color: 'bg-blue-500', text: 'Discover Our Local Food', textColor: 'text-white' },
-    { color: 'bg-yellow-400', text: 'Share Memories', textColor: 'text-black' },
-    { color: 'bg-orange-500', text: 'Our SG Culture', textColor: 'text-white' }
-  ];
+    const cardData = [
+      { color: 'bg-red-500', text: 'Spot the Difference', textColor: 'text-white' },
+      { color: 'bg-green-500', text: 'Virtual Tours', textColor: 'text-white' },
+      { color: 'bg-blue-500', text: 'Discover Our Local Food', textColor: 'text-white' },
+      { color: 'bg-yellow-400', text: 'Share Memories', textColor: 'text-black' },
+      { color: 'bg-orange-500', text: 'Our SG Culture', textColor: 'text-white' }
+    ];
 
-  // Map text to link
-  cardData.forEach(data => data.link = {
-    'Spot the Difference': 'Game2.html',
-    'Virtual Tours': 'VR.html',
-    'Discover Our Local Food': 'Game1.html',
-    'Share Memories': 'AR.html',
-    'Our SG Culture': 'quiz.html'
-  }[data.text]);
+    // Map text to link
+    cardData.forEach(data => data.link = {
+      'Spot the Difference': 'Game2.html',
+      'Virtual Tours': 'VR.html',
+      'Discover Our Local Food': 'Game1.html',
+      'Share Memories': 'AR.html',
+      'Our SG Culture': 'quiz.html'
+    }[data.text]);
 
-  const cardWidth = 600 + 24; // width + margin
-  const clonesPerSide = 3; // Number of times to repeat cards on each side
+    const cardWidth = 300 + 24; // card width + spacing
+    const clonesPerSide = 2; // Number of times to repeat cards on each side
 
-  // Function to create and append card elements
-  function createCards() {
-    for (let i = 0; i < clonesPerSide * 2 + 1; i++) {
-      cardData.forEach(data => {
-        const card = document.createElement('div');
-        card.className = `card snap-center min-w-[300px] h-[400px] ${data.color} ${data.textColor} rounded-3xl shadow-xl flex items-center justify-center text-2xl font-bold cursor-pointer`;
-        card.textContent = data.text;
-        card.setAttribute('data-link', data.link);
+    // Create and append card elements
+    function createCards() {
+      for (let i = 0; i < clonesPerSide * 2 + 1; i++) {
+        cardData.forEach(data => {
+          const card = document.createElement('div');
+          card.className = `card snap-center min-w-[300px] h-[400px] ${data.color} ${data.textColor} rounded-3xl shadow-xl flex items-center justify-center text-2xl font-bold cursor-pointer`;
+          card.textContent = data.text;
+          card.setAttribute('data-link', data.link);
 
-        // Add click listener to redirect
-        card.addEventListener('click', () => {
-          const link = card.getAttribute('data-link');
-          if (link) {
-            window.location.href = link;
-          }
+          card.addEventListener('click', () => {
+            const link = card.getAttribute('data-link');
+            if (link) window.location.href = link;
+          });
+
+          carousel.appendChild(card);
         });
+      }
+    }
 
-        carousel.appendChild(card);
+    createCards();
+
+    function scrollByCard(count) {
+      carousel.scrollLeft += cardWidth * count;
+    }
+
+    function updateRotation() {
+      const center = carousel.scrollLeft + carousel.offsetWidth / 2;
+      const cards = carousel.querySelectorAll('.card');
+      cards.forEach(card => {
+        const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+        const distance = Math.abs(center - cardCenter);
+        const maxRotation = 15;
+        const rotation = Math.min(maxRotation, distance / 10);
+        const direction = center > cardCenter ? 1 : -1;
+        const scale = 1 - Math.min(0.3, distance / 1000);
+        card.style.transform = `rotateY(${rotation * direction}deg) scale(${scale})`;
       });
     }
-  }
 
-  createCards();
+    function loopScroll() {
+      const singleSetWidth = cardWidth * cardData.length;
+      const totalClonedWidth = singleSetWidth * (clonesPerSide * 2 + 1);
+      const scrollLeft = carousel.scrollLeft;
 
-  function scrollByCard(count) {
-    carousel.scrollLeft += cardWidth * count;
-  }
-
-  function updateRotation() {
-    const center = carousel.scrollLeft + carousel.offsetWidth / 2;
-    const cards = carousel.querySelectorAll('.card');
-    cards.forEach(card => {
-      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-      const distance = Math.abs(center - cardCenter);
-      const maxRotation = 15;
-      const rotation = Math.min(maxRotation, distance / 10);
-      const direction = center > cardCenter ? 1 : -1;
-      const scale = 1 - Math.min(0.3, distance / 1000);
-      card.style.transform = `rotateY(${rotation * direction}deg) scale(${scale})`;
-    });
-  }
-
-  function loopScroll() {
-    const maxScroll = cardWidth * cardData.length * clonesPerSide * 2;
-    if (carousel.scrollLeft <= cardWidth * cardData.length) {
-      // Scrolled too far left, reset to middle
-      carousel.scrollLeft += cardWidth * cardData.length * clonesPerSide;
-    } else if (carousel.scrollLeft >= maxScroll) {
-      // Scrolled too far right, reset to middle
-      carousel.scrollLeft -= cardWidth * cardData.length * clonesPerSide;
+      if (scrollLeft < singleSetWidth * 0.5) {
+        // Scrolled too far left, jump forward
+        carousel.scrollLeft += singleSetWidth * clonesPerSide;
+      } else if (scrollLeft > totalClonedWidth - singleSetWidth * 1.5) {
+        // Scrolled too far right, jump back
+        carousel.scrollLeft -= singleSetWidth * clonesPerSide;
+      }
     }
-  }
 
-  carousel.addEventListener('scroll', () => {
-    updateRotation();
-    clearTimeout(carousel._loopTimer);
-    carousel._loopTimer = setTimeout(loopScroll, 60);
-  });
+    carousel.addEventListener('scroll', () => {
+      updateRotation();
+      clearTimeout(carousel._loopTimer);
+      carousel._loopTimer = setTimeout(loopScroll, 60);
+    });
 
-  leftBtn.addEventListener('click', () => scrollByCard(-1));
-  rightBtn.addEventListener('click', () => scrollByCard(1));
+    leftBtn.addEventListener('click', () => scrollByCard(-1));
+    rightBtn.addEventListener('click', () => scrollByCard(1));
 
-  // Start at middle batch
-  window.onload = () => {
-    carousel.scrollLeft = cardWidth * cardData.length * clonesPerSide;
-    updateRotation();
-  };
-</script>
-<div class="fixed bottom-0 w-full bg-red-600 text-white text-center py-4 text-3xl font-bold shadow-md z-50">
-  brought to you by ITE College West: Red Dot Rewind
-</div>
+    // Scroll to middle set on load
+    window.onload = () => {
+      requestAnimationFrame(() => {
+        carousel.scrollLeft = cardWidth * cardData.length * clonesPerSide;
+        updateRotation();
+      });
+    };
+  </script>
+
+  <!-- Footer -->
+  <div class="fixed bottom-0 w-full bg-red-600 text-white text-center py-4 text-3xl font-bold shadow-md z-50">
+    brought to you by ITE College West: Red Dot Rewind
+  </div>
 </body>
 </html>
