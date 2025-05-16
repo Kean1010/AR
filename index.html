@@ -29,14 +29,13 @@
     SG60: Reconnect the Dots
   </div>
 
-  <!-- Carousel (no buttons) -->
+  <!-- Carousel -->
   <div class="flex items-center justify-center w-full max-w-6xl py-10 px-6">
-    <!-- Carousel -->
     <div
       id="carousel"
       class="flex space-x-6 overflow-x-auto snap-x snap-mandatory w-full px-6 py-4"
     >
-      <!-- Cards dynamically added via JavaScript -->
+      <!-- Cards dynamically inserted -->
     </div>
   </div>
 
@@ -51,46 +50,26 @@
       { color: 'bg-orange-500', text: 'Our SG Culture', textColor: 'text-white' }
     ];
 
-    // Add links
-    cardData.forEach(data => data.link = {
-      'Spot the Difference': 'Game2.html',
-      'Virtual Tours': 'VR.html',
-      'Discover Our Local Food': 'Game1.html',
-      'Share Memories': 'AR.html',
-      'Our SG Culture': 'quiz.html'
-    }[data.text]);
+    cardData.forEach(data => {
+      data.link = {
+        'Spot the Difference': 'Game2.html',
+        'Virtual Tours': 'VR.html',
+        'Discover Our Local Food': 'Game1.html',
+        'Share Memories': 'AR.html',
+        'Our SG Culture': 'quiz.html'
+      }[data.text];
 
-    const cardWidth = 300 + 24; // width + margin
-    const clones = 2; // clones on each side
-
-    function createCards() {
-      // Clone left
-      for (let i = 0; i < clones; i++) {
-        cardData.forEach(data => addCard(data, true));
-      }
-      // Original cards
-      cardData.forEach(data => addCard(data));
-      // Clone right
-      for (let i = 0; i < clones; i++) {
-        cardData.forEach(data => addCard(data, true));
-      }
-    }
-
-    function addCard(data, isClone = false) {
       const card = document.createElement('div');
       card.className = `card snap-center min-w-[300px] h-[400px] ${data.color} ${data.textColor} rounded-3xl shadow-xl flex items-center justify-center text-2xl font-bold cursor-pointer`;
       card.textContent = data.text;
       card.setAttribute('data-link', data.link);
-      if (isClone) card.setAttribute('data-clone', 'true');
 
       card.addEventListener('click', () => {
-        if (!isClone) window.location.href = data.link;
+        window.location.href = data.link;
       });
 
       carousel.appendChild(card);
-    }
-
-    createCards();
+    });
 
     function updateRotation() {
       const center = carousel.scrollLeft + carousel.offsetWidth / 2;
@@ -106,37 +85,15 @@
       });
     }
 
-    function loopScroll() {
-      const totalCards = cardData.length;
-      const totalScrollWidth = carousel.scrollWidth;
-      const originalWidth = totalCards * cardWidth;
-      const clonesWidth = totalCards * cardWidth * clones;
-
-      if (carousel.scrollLeft < clonesWidth * 0.5) {
-        carousel.scrollLeft += originalWidth;
-      }
-
-      if (carousel.scrollLeft > totalScrollWidth - clonesWidth * 0.5) {
-        carousel.scrollLeft -= originalWidth;
-      }
-    }
-
-    carousel.addEventListener('scroll', () => {
-      updateRotation();
-      clearTimeout(carousel._loopTimer);
-      carousel._loopTimer = setTimeout(loopScroll, 60);
-    });
+    carousel.addEventListener('scroll', updateRotation);
 
     window.onload = () => {
-      requestAnimationFrame(() => {
-        carousel.scrollLeft = cardData.length * cardWidth * clones;
-        updateRotation();
-      });
+      updateRotation();
     };
   </script>
 
   <!-- Footer with smaller font -->
-  <div class="fixed bottom-0 w-full bg-red-600 text-white text-center py-4 text-lg font-bold shadow-md z-50">
+  <div class="fixed bottom-0 w-full bg-red-600 text-white text-center py-4 text-xl font-bold shadow-md z-50">
     brought to you by ITE College West: Red Dot Rewind
   </div>
 </body>
