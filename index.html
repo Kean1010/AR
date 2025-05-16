@@ -1,43 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Camera Test</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Video Scanner</title>
   <style>
-    video { width: 100%; max-width: 600px; }
-    button { padding: 10px; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+    #toggleCamera {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+    #toggleCamera:hover {
+      background-color: #0056b3;
+    }
+    #toggleCamera:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    a-scene {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    video {
+      object-fit: cover;
+    }
   </style>
 </head>
 <body>
-  <video id="camera" autoplay playsinline></video>
   <button id="toggleCamera">Turn On Camera</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ar.js@2.2.2/aframe/build/aframe-ar-nft.min.js"></script>
   <script>
-    const video = document.getElementById('camera');
     const toggleButton = document.getElementById('toggleCamera');
+    let scene = null;
     let stream = null;
+
     async function startCamera() {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' }
         });
-        video.srcObject = stream;
+        console.log('Stream acquired:', stream);
+
+        scene = document.createElement('a-scene');
+        scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false;');
+        scene.setAttribute('embedded', '');
+
+        const marker = document.createElement('a-nft');
+        marker.setAttribute('type', 'nft');
+        marker.setAttribute('url', 'https://github.com/Kean1010/AR/marker'); // Replace with your GitHub Pages marker URL
+        marker.setAttribute('smooth', 'true');
+        marker.setAttribute('smoothCount', '10');
+        marker.setAttribute('smoothTolerance', '0.01');
+        marker.setAttribute('smoothThreshold', '5');
+        marker.addEventListener('markerFound', () => {
+          console.log('Marker detected!');
+          video.object3D.visible = true;
+        });
+        marker.addEventListener('markerLost', () => {
+          console.log('Marker lost');
+          video.object3D.visible = false;
+        });
+
+        const video = document.createElement('a-video');
+        video.setAttribute('src', 'https://github.com/Kean1010/AR/video.mp4'); // Replace with your video URL
+        video.setAttribute('width', '0.2');
+        video.setAttribute('height', '0.15');
+        video.setAttribute('position', '0 0 0');
+        video.setAttribute('rotation', '0 0 0');
+        video.setAttribute('autoplay', 'true');
+        video.setAttribute('loop', 'true');
+        video.addEventListener('loadeddata', () => console.log('Video loaded successfully'));
+        video.addEventListener('error', (e) => console.error('Video error:', e));
+
+        marker.appendChild(video);
+        scene.appendChild(marker);
+
+        const camera = document.createElement('a-entity');
+        camera.setAttribute('camera', '');
+        scene.appendChild(camera);
+
+        document.body.appendChild(scene);
+        scene.addEventListener('loaded', () => console.log('A-Frame scene loaded'));
         toggleButton.textContent = 'Turn Off Camera';
       } catch (err) {
         console.error('Camera error:', err);
         alert('Camera error: ' + err.message);
       }
     }
+
     function stopCamera() {
       if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
+        stream.getTracks().forEach(track => {
+          track.stop();
+          console.log('Track stopped:', track);
+        });
         stream = null;
       }
+      if (scene) {
+        scene.remove();
+        scene = null;
+      }
       toggleButton.textContent = 'Turn On Camera';
+      console.log('Camera stopped');
     }
+
     toggleButton.addEventListener('click', () => {
-      if (stream) stopCamera();
-      else startCamera();
+      if (stream) {
+        stopCamera();
+      } else {
+        startCamera();
+      }
     });
+
+    window.addEventListener('beforeunload', stopCamera);
   </script>
 </body>
 </html>
