@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SG60: Rewind Singapore</title>
+  <title>SG60: Reconnect the Dots</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .card {
@@ -25,18 +25,23 @@
 
   <!-- Banner -->
   <div class="w-full bg-red-600 text-white text-center py-4 text-3xl font-bold shadow-md">
-    SG60: Rewind Singapore
+    SG60: Reconnect the Dots
   </div>
 
-  <!-- Carousel -->
-  <div class="flex-1 flex items-center justify-center p-4 w-full">
+  <!-- Carousel with Left/Right Buttons -->
+  <div class="relative flex items-center justify-center w-full max-w-6xl py-10 px-6">
+    <!-- Left Button -->
+    <button id="leftBtn" class="absolute left-0 z-10 bg-white shadow-lg p-2 rounded-full hover:bg-gray-200">
+      ⬅️
+    </button>
+
+    <!-- Carousel -->
     <div
       id="carousel"
-      class="flex space-x-6 overflow-x-auto snap-x snap-mandatory w-full max-w-5xl px-6 py-10 relative"
+      class="flex space-x-6 overflow-x-auto snap-x snap-mandatory w-full px-6 py-4"
     >
       <!-- Clone of Last 2 Cards (for backward loop) -->
       <div class="card snap-center min-w-[300px] h-[400px] bg-yellow-400 rounded-3xl shadow-xl flex items-center justify-center text-black text-2xl font-bold">
-         
         Share Memories
       </div>
       <div class="card snap-center min-w-[300px] h-[400px] bg-orange-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
@@ -66,53 +71,91 @@
         Virtual Tours
       </div>
     </div>
+
+    <!-- Right Button -->
+    <button id="rightBtn" class="absolute right-0 z-10 bg-white shadow-lg p-2 rounded-full hover:bg-gray-200">
+      ➡️
+    </button>
   </div>
 
-  <!-- JavaScript -->
-  <script>
-    const carousel = document.getElementById('carousel');
-    const cards = carousel.querySelectorAll('.card');
-    const cardWidth = 300 + 24; // card + margin-right (1.5rem)
-    const totalRealCards = 5;
+<script>
+  const carousel = document.getElementById('carousel');
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
 
-    // Start at first real card (3rd visible card, index 2)
-    carousel.scrollLeft = cardWidth * 2;
+  const cardData = [
+    { color: 'bg-red-500', text: 'Spot the Difference', textColor: 'text-white' },
+    { color: 'bg-green-500', text: 'Virtual Tours', textColor: 'text-white' },
+    { color: 'bg-blue-500', text: 'Discover Our Local Food', textColor: 'text-white' },
+    { color: 'bg-yellow-400', text: 'Share Memories', textColor: 'text-black' },
+    { color: 'bg-orange-500', text: 'Our SG Culture', textColor: 'text-white' }
+  ];
 
-    function updateRotation() {
-      const center = carousel.scrollLeft + carousel.offsetWidth / 2;
-      cards.forEach(card => {
-        const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-        const distance = Math.abs(center - cardCenter);
-        const maxRotation = 15;
-        const rotation = Math.min(maxRotation, distance / 10);
-        const direction = center > cardCenter ? 1 : -1;
-        const scale = 1 - Math.min(0.3, distance / 1000);
-        card.style.transform = `rotateY(${rotation * direction}deg) scale(${scale})`;
+  const cardWidth = 300 + 24; // width + margin
+  const clonesPerSide = 3; // Number of times to repeat cards on each side
+  const totalClones = cardData.length * clonesPerSide * 2;
+
+  // Function to create and append card elements
+  function createCards() {
+    for (let i = 0; i < clonesPerSide * 2 + 1; i++) {
+      cardData.forEach(data => {
+        const card = document.createElement('div');
+        card.className = `card snap-center min-w-[300px] h-[400px] ${data.color} ${data.textColor} rounded-3xl shadow-xl flex items-center justify-center text-2xl font-bold`;
+        card.textContent = data.text;
+        carousel.appendChild(card);
       });
     }
+  }
 
-    function loopScroll() {
-      const index = Math.round(carousel.scrollLeft / cardWidth);
+  createCards();
 
-      // If user scrolls before first real card, jump to end
-      if (index <= 1) {
-        carousel.scrollLeft = cardWidth * (totalRealCards + 1);
-      }
+  function scrollByCard(count) {
+    carousel.scrollLeft += cardWidth * count;
+  }
 
-      // If user scrolls after last real card, jump to start
-      else if (index >= totalRealCards + 2) {
-        carousel.scrollLeft = cardWidth * 2;
-      }
-    }
-
-    carousel.addEventListener('scroll', () => {
-      updateRotation();
-      clearTimeout(carousel._loopTimer);
-      carousel._loopTimer = setTimeout(loopScroll, 60);
+  function updateRotation() {
+    const center = carousel.scrollLeft + carousel.offsetWidth / 2;
+    const cards = carousel.querySelectorAll('.card');
+    cards.forEach(card => {
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const distance = Math.abs(center - cardCenter);
+      const maxRotation = 15;
+      const rotation = Math.min(maxRotation, distance / 10);
+      const direction = center > cardCenter ? 1 : -1;
+      const scale = 1 - Math.min(0.3, distance / 1000);
+      card.style.transform = `rotateY(${rotation * direction}deg) scale(${scale})`;
     });
+  }
 
+  function loopScroll() {
+    const maxScroll = cardWidth * cardData.length * clonesPerSide * 2;
+    if (carousel.scrollLeft <= cardWidth * cardData.length) {
+      // Scrolled too far left, reset to middle
+      carousel.scrollLeft += cardWidth * cardData.length * clonesPerSide;
+    } else if (carousel.scrollLeft >= maxScroll) {
+      // Scrolled too far right, reset to middle
+      carousel.scrollLeft -= cardWidth * cardData.length * clonesPerSide;
+    }
+  }
+
+  carousel.addEventListener('scroll', () => {
     updateRotation();
-  </script>
+    clearTimeout(carousel._loopTimer);
+    carousel._loopTimer = setTimeout(loopScroll, 60);
+  });
+
+  leftBtn.addEventListener('click', () => scrollByCard(-1));
+  rightBtn.addEventListener('click', () => scrollByCard(1));
+
+  // Start at middle batch
+  window.onload = () => {
+    carousel.scrollLeft = cardWidth * cardData.length * clonesPerSide;
+    updateRotation();
+  };
+</script>
+ 
+
+
 
 </body>
 </html>
