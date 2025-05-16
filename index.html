@@ -65,7 +65,7 @@
     <button id="toggle-button">Start Camera</button>
   </div>
 
-  <video id="video-player" src="assets/video.mp4" loop playsinline webkit-playsinline controls></video>
+  <video id="video-player" src="video.mp4" loop playsinline webkit-playsinline controls></video>
   <div id="ar-container"></div>
 
   <script>
@@ -83,7 +83,7 @@
 
         mindarThree = new window.MINDAR.IMAGE.MindARThree({
           container: arContainer,
-          imageTargetSrc: "assets/targets.mind"
+          imageTargetSrc: "targets.mind"
         });
 
         const { renderer, scene, camera } = mindarThree;
