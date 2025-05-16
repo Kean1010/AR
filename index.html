@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>MindAR Video Overlay</title>
-
   <script src="https://cdn.jsdelivr.net/npm/three@0.131.3/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
@@ -14,21 +13,22 @@
       padding: 0;
       overflow: hidden;
       height: 100%;
+      background: black;
     }
     #ar-container {
       width: 100%;
       height: 100%;
     }
-    #toggle-button {
+    #start-button {
       position: absolute;
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 999;
+      z-index: 10;
       padding: 10px 20px;
+      font-size: 16px;
       background: #2196f3;
       color: white;
-      font-size: 16px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
@@ -37,42 +37,44 @@
 </head>
 <body>
 
-  <button id="toggle-button">Start AR1</button>
+  <button id="start-button">Start AR2</button>
   <div id="ar-container"></div>
 
   <script>
-    const button = document.getElementById('toggle-button');
-    const arContainer = document.getElementById('ar-container');
+    const startButton = document.getElementById('start-button');
 
-    let mindarThree, video;
+    startButton.addEventListener('click', async () => {
+      startButton.style.display = 'none';
 
-    button.addEventListener('click', async () => {
-      if (mindarThree) return; // prevent multiple starts
-
-      // Load video
-      video = document.createElement('video');
-      video.src = 'video.mp4';
-      video.muted = true;
+      // Load the video
+      const video = document.createElement('video');
+      video.src = 'video.mp4'; // make sure video.mp4 is in same folder
       video.loop = true;
+      video.muted = true;
       video.setAttribute('playsinline', '');
       video.setAttribute('webkit-playsinline', '');
-      await video.play().catch(err => console.error("Video play failed:", err));
 
-      // Setup AR
-      mindarThree = new window.MINDAR.IMAGE.MindARThree({
-        container: arContainer,
-        imageTargetSrc: 'targets.mind',
-        maxTrack: 1
+      // Wait for video to load metadata (ensures texture won't be null)
+      await new Promise((resolve) => {
+        video.onloadeddata = () => resolve();
+      });
+
+      const mindarThree = new window.MINDAR.IMAGE.MindARThree({
+        container: document.querySelector("#ar-container"),
+        imageTargetSrc: "targets.mind", // ensure this file exists
       });
 
       const { renderer, scene, camera } = mindarThree;
+
       const anchor = mindarThree.addAnchor(0);
 
+      // Create video texture and plane only after video is ready
       const texture = new THREE.VideoTexture(video);
-      const geometry = new THREE.PlaneGeometry(1, 0.5625); // 16:9 video ratio
+      const geometry = new THREE.PlaneGeometry(1, 0.5625); // 16:9 aspect ratio
       const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-      const mesh = new THREE.Mesh(geometry, material);
-      anchor.group.add(mesh);
+      const videoPlane = new THREE.Mesh(geometry, material);
+
+      anchor.group.add(videoPlane);
 
       anchor.onTargetFound = () => {
         video.play();
@@ -85,11 +87,10 @@
       };
 
       await mindarThree.start();
-      renderer.setAnimationLoop(() => renderer.render(scene, camera));
-
-      button.style.display = 'none'; // hide button after start
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
+      });
     });
   </script>
-
 </body>
 </html>
