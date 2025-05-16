@@ -43,11 +43,11 @@
     const carousel = document.getElementById('carousel');
 
     const cardData = [
-      { color: 'bg-red-500', text: 'Spot the Difference', textColor: 'text-white' },
-      { color: 'bg-green-500', text: 'Virtual Tours', textColor: 'text-white' },
-      { color: 'bg-blue-500', text: 'Discover Our Local Food', textColor: 'text-white' },
-      { color: 'bg-yellow-400', text: 'Share Memories', textColor: 'text-black' },
-      { color: 'bg-orange-500', text: 'Our SG Culture', textColor: 'text-white' }
+      { color: 'bg-red-500', text: 'Spot the Difference', textColor: 'text-white', image: 'spot.png' },
+      { color: 'bg-green-500', text: 'Virtual Tours', textColor: 'text-white', image: 'virtual.png' },
+      { color: 'bg-blue-500', text: 'Discover Our Local Food', textColor: 'text-white', image: 'food.png' },
+      { color: 'bg-yellow-400', text: 'Share Memories', textColor: 'text-black', image: 'memories.png' },
+      { color: 'bg-orange-500', text: 'Our SG Culture', textColor: 'text-white', image: 'culture.png' }
     ];
 
     cardData.forEach(data => {
@@ -60,10 +60,20 @@
       }[data.text];
 
       const card = document.createElement('div');
-      card.className = `card snap-center min-w-[300px] h-[400px] ${data.color} ${data.textColor} rounded-3xl shadow-xl flex items-center justify-center text-2xl font-bold cursor-pointer`;
-      card.textContent = data.text;
-      card.setAttribute('data-link', data.link);
+      card.className = `card snap-center min-w-[300px] h-[400px] ${data.color} ${data.textColor} rounded-3xl shadow-xl flex flex-col items-center justify-center space-y-4 text-2xl font-bold cursor-pointer`;
 
+      const img = document.createElement('img');
+      img.src = data.image;
+      img.alt = data.text;
+      img.className = 'w-20 h-20 object-contain';
+
+      const title = document.createElement('div');
+      title.textContent = data.text;
+
+      card.appendChild(img);
+      card.appendChild(title);
+
+      card.setAttribute('data-link', data.link);
       card.addEventListener('click', () => {
         window.location.href = data.link;
       });
