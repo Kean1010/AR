@@ -1,43 +1,43 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>AR Video Overlay</title>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.131.3/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
-    <style>
-      body, html {
-        margin: 0;
-        overflow: hidden;
-        font-family: sans-serif;
-      }
-      #start-button {
-        position: absolute;
-        z-index: 10;
-        padding: 12px 20px;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        cursor: pointer;
-      }
-    </style>
-  </head>
-  <body>
-    <button id="start-button">Start AR</button>
-    <video id="video" src="video.mp4" style="display:none;" loop></video>
+<head>
+  <meta charset="UTF-8" />
+  <title>AR Video Overlay</title>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.131.3/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
+  <style>
+    body, html {
+      margin: 0;
+      overflow: hidden;
+    }
+    #start-button {
+      position: absolute;
+      z-index: 10;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <button id="start-button">Start AR</button>
+  <video id="video" src="video.mp4" style="display:none;" loop></video>
 
-    <script type="module">
-      import { MindARThree } from "https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js";
+  <script>
+    document.querySelector("#start-button").addEventListener("click", async () => {
+      document.querySelector("#start-button").style.display = "none";
 
-      const mindarThree = new MindARThree({
+      const mindarThree = new window.MINDAR.IMAGE.MindARThree({
         container: document.body,
-        imageTargetSrc: "targets.mind", // Change if your path differs
+        imageTargetSrc: "targets.mind",
       });
 
       const { renderer, scene, camera } = mindarThree;
@@ -45,11 +45,8 @@
 
       const video = document.querySelector("#video");
       const videoTexture = new THREE.VideoTexture(video);
-      videoTexture.minFilter = THREE.LinearFilter;
-      videoTexture.magFilter = THREE.LinearFilter;
-      videoTexture.format = THREE.RGBFormat;
 
-      const geometry = new THREE.PlaneGeometry(1, 0.5625); // 16:9 video ratio
+      const geometry = new THREE.PlaneGeometry(1, 0.5625);
       const material = new THREE.MeshBasicMaterial({ map: videoTexture });
       const plane = new THREE.Mesh(geometry, material);
 
@@ -58,13 +55,11 @@
       anchor.onTargetFound = () => video.play();
       anchor.onTargetLost = () => video.pause();
 
-      document.querySelector("#start-button").addEventListener("click", async () => {
-        document.querySelector("#start-button").style.display = "none";
-        await mindarThree.start();
-        renderer.setAnimationLoop(() => {
-          renderer.render(scene, camera);
-        });
+      await mindarThree.start();
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
       });
-    </script>
-  </body>
+    });
+  </script>
+</body>
 </html>
