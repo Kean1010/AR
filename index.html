@@ -39,70 +39,104 @@
     let started = false;
     let hiddenCameraElements = [];
 
+    // Check if camera access is available
+    async function checkCameraAccess() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop()); // Stop the stream after checking
+        console.log("Camera access granted");
+        return true;
+      } catch (err) {
+        console.error("Camera access denied or unavailable:", err);
+        alert("Camera access is required. Please allow camera permissions and ensure you're using HTTPS or localhost.");
+        return false;
+      }
+    }
+
     toggleButton.addEventListener("click", async () => {
       if (!started) {
+        // Verify camera access before starting
+        const hasCameraAccess = await checkCameraAccess();
+        if (!hasCameraAccess) return;
+
         toggleButton.textContent = "Stop Camera";
+        console.log("Initializing MindAR...");
 
-        mindarThree = new window.MINDAR.IMAGE.MindARThree({
-          container: arContainer,
-          imageTargetSrc: "targets.mind"
-        });
-
-        const { renderer, scene, camera } = mindarThree;
-        const anchor = mindarThree.addAnchor(0);
-
-        // Create a video texture from the video element
-        const videoTexture = new THREE.VideoTexture(videoPlayer);
-        videoTexture.minFilter = THREE.LinearFilter;
-        videoTexture.magFilter = THREE.LinearFilter;
-
-        // Create a material with the video texture
-        const videoMaterial = new THREE.MeshBasicMaterial({
-          map: videoTexture,
-          side: THREE.DoubleSide
-        });
-
-        // Create a plane geometry for the video (16:9 aspect ratio)
-        const videoGeometry = new THREE.PlaneGeometry(1, 0.5625);
-        const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
-
-        // Add a simple frame around the video
-        const frameGeometry = new THREE.BoxGeometry(1.1, 0.6625, 0.05);
-        const frameMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-        const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
-        frameMesh.position.set(0, 0, -0.01);
-
-        // Add video and frame to the anchor
-        anchor.group.add(videoMesh);
-        anchor.group.add(frameMesh);
-
-        anchor.onTargetFound = () => {
-          videoPlayer.play();
-
-          // Hide the camera feed
-          hiddenCameraElements = arContainer.querySelectorAll("canvas, video");
-          hiddenCameraElements.forEach(el => {
-            el.style.display = "none";
+        try {
+          // Initialize MindAR
+          mindarThree = new window.MINDAR.IMAGE.MindARThree({
+            container: arContainer,
+            imageTargetSrc: "targets.mind"
           });
-        };
 
-        anchor.onTargetLost = () => {
-          videoPlayer.pause();
+          const { renderer, scene, camera } = mindarThree;
+          const anchor = mindarThree.addAnchor(0);
 
-          // Show the camera feed
-          hiddenCameraElements.forEach(el => {
-            el.style.display = "block";
+          // Log when MindAR is set up
+          console.log("MindAR initialized, starting camera...");
+
+          // Create a video texture
+          const videoTexture = new THREE.VideoTexture(videoPlayer);
+          videoTexture.minFilter = THREE.LinearFilter;
+          videoTexture.magFilter = THREE.LinearFilter;
+
+          // Create a material with the video texture
+          const videoMaterial = new THREE.MeshBasicMaterial({
+            map: videoTexture,
+            side: THREE.DoubleSide
           });
-        };
 
-        await mindarThree.start();
-        started = true;
+          // Create a plane geometry for the video
+          const videoGeometry = new THREE.PlaneGeometry(1, 0.5625);
+          const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
 
-        renderer.setAnimationLoop(() => {
-          renderer.render(scene, camera);
-        });
+          // Add a simple frame
+          const frameGeometry = new THREE.BoxGeometry(1.1, 0.6625, 0.05);
+          const frameMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+          const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
+          frameMesh.position.set(0, 0, -0.01);
+
+          // Add video and frame to the anchor
+          anchor.group.add(videoMesh);
+          anchor.group.add(frameMesh);
+
+          anchor.onTargetFound = () => {
+            console.log("Marker detected, playing video...");
+            videoPlayer.play();
+
+            // Optionally hide the camera feed
+            hiddenCameraElements = arContainer.querySelectorAll("canvas, video");
+            hiddenCameraElements.forEach(el => {
+              el.style.display = "none";
+            });
+          };
+
+          anchor.onTargetLost = () => {
+            console.log("Marker lost, pausing video...");
+            videoPlayer.pause();
+
+            // Show the camera feed
+            hiddenCameraElements.forEach(el => {
+              el.style.display = "block";
+            });
+          };
+
+          // Start MindAR
+          await mindarThree.start();
+          console.log("MindAR started successfully");
+          started = true;
+
+          renderer.setAnimationLoop(() => {
+            renderer.render(scene, camera);
+          });
+        } catch (err) {
+          console.error("Error starting MindAR:", err);
+          alert("Failed to start AR. Check console for details and ensure targets.mind is correct.");
+          toggleButton.textContent = "Start Camera";
+        }
       } else {
         toggleButton.textContent = "Start Camera";
+        console.log("Stopping MindAR...");
 
         videoPlayer.pause();
 
@@ -112,7 +146,13 @@
           });
         }
 
-        await mindarThree.stop();
+        try {
+          await mindarThree.stop();
+          console.log("MindAR stopped successfully");
+        } catch (err) {
+          console.error("Error stopping MindAR:", err);
+        }
+
         mindarThree = null;
         started = false;
       }
