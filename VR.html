@@ -1,1 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>360 Viewer with Hotspots and Mini Map</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #viewer {
+      width: 100%;
+      height: 100%;
+    }
+
+    #minimap {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 150px;
+      height: 150px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border: 2px solid #fff;
+      border-radius: 10px;
+    }
+
+    .hotspot {
+      width: 32px;
+      height: 32px;
+      background-color: white;
+      border-radius: 50%;
+      border: 2px solid black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: black;
+      font-family: sans-serif;
+      box-shadow: 0 0 6px rgba(0,0,0,0.5);
+      cursor: pointer;
+    }
+
+    #overlay-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 999;
+    }
+
+    #overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      font-size: 18px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    #overlay button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: red;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    #overlay img, #overlay video {
+      max-width: 100%;
+      margin-top: 15px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="viewer"></div>
+  <canvas id="minimap"></canvas>
+
+  <div id="overlay-bg" onclick="hideOverlay()">
+    <div id="overlay" onclick="event.stopPropagation()">
+      <button onclick="hideOverlay()">Close</button>
+      <div id="overlay-content"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css" />
+
+  <script>
+    const rooms = {
+      room1: {
+        panorama: 'office.jpg',
+        hotspots: [
+          { pitch: 10, yaw: 100, type: 'navigation', target: 'room2' },
+          { pitch: 5, yaw: 20, type: 'info', id: 'text' },
+          { pitch: -12, yaw: -145, type: 'info', id: 'image' },
+          { pitch: 15, yaw: 60, type: 'info', id: 'video' }
+        ]
+      },
+      room2: {
+        panorama: 'https://pannellum.org/images/bma-1.jpg',
+        hotspots: [
+          { pitch: 0, yaw: -100, type: 'navigation', target: 'room1' }
+        ]
+      }
+    };
+
+    let currentRoom = 'room1';
+
+    const viewer = pannellum.viewer('viewer', {
+      default: {
+        firstScene: 'room1',
+        sceneFadeDuration: 1000
+      },
+      scenes: {
+        room1: {
+          type: 'equirectangular',
+          panorama: rooms.room1.panorama,
+          hotSpots: rooms.room1.hotspots.map(h => ({
+            pitch: h.pitch,
+            yaw: h.yaw,
+            type: 'custom',
+            createTooltipFunc: hotspotCreator,
+            createTooltipArgs: h
+          }))
+        },
+        room2: {
+          type: 'equirectangular',
+          panorama: rooms.room2.panorama,
+          hotSpots: rooms.room2.hotspots.map(h => ({
+            pitch: h.pitch,
+            yaw: h.yaw,
+            type: 'custom',
+            createTooltipFunc: hotspotCreator,
+            createTooltipArgs: h
+          }))
+        }
+      }
+    });
+
+    function hotspotCreator(hotSpotDiv, args) {
+      hotSpotDiv.classList.add('hotspot');
+
+      if (args.type === 'navigation') {
+        hotSpotDiv.textContent = '⤴';
+        hotSpotDiv.title = 'Go to another room';
+        hotSpotDiv.addEventListener('click', () => switchRoom(args.target));
+      } else {
+        hotSpotDiv.textContent = 'i';
+        hotSpotDiv.title = 'More Info';
+
+        hotSpotDiv.addEventListener('click', () => {
+          if (args.id === 'text') {
+            showOverlay(`<h2>Welcome!</h2><p>This is a simple text-only popup for demonstration purposes.</p>`);
+          } else if (args.id === 'image') {
+            showOverlay(`<h2>Artifact Display</h2><p>This bear is from Singapore Discovery Centre</p><img src="gorilla.jpg" alt="gorilla face">`);
+          } else if (args.id === 'video') {
+            showOverlay(`<h2>Restoration Video</h2><p>Watch how this place was restored over time.</p><video controls><source src="documentary.mp4" type="video/mp4">Your browser does not support the video tag.</video>`);
+          }
+        });
+      }
+    }
+
+    function showOverlay(html) {
+      document.getElementById('overlay-content').innerHTML = html;
+      document.getElementById('overlay-bg').style.display = 'block';
+    }
+
+    function hideOverlay() {
+      document.getElementById('overlay-bg').style.display = 'none';
+    }
+
+    function switchRoom(roomName) {
+      currentRoom = roomName;
+      viewer.loadScene(roomName);
+      drawMiniMap();
+    }
+
+    function drawMiniMap() {
+      const canvas = document.getElementById('minimap');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Room dots
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(50, 75, 10, 0, 2 * Math.PI);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(100, 75, 10, 0, 2 * Math.PI);
+      ctx.fill();
+
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(50, 75);
+      ctx.lineTo(100, 75);
+      ctx.stroke();
+
+      // Highlight current room
+      ctx.fillStyle = 'lime';
+      ctx.beginPath();
+      ctx.arc(currentRoom === 'room1' ? 50 : 100, 75, 5, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    drawMiniMap();
+  </script>
+</body>
+</html>
 
