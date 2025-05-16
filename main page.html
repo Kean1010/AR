@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SG60: Rewind Singapore</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .card {
+      transition: transform 0.3s ease;
+      transform-origin: center center;
+    }
+
+    #carousel {
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+    }
+
+    #carousel::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col items-center min-h-screen">
+
+  <!-- Banner -->
+  <div class="w-full bg-red-600 text-white text-center py-4 text-3xl font-bold shadow-md">
+    SG60: Rewind Singapore
+  </div>
+
+  <!-- Carousel -->
+  <div class="flex-1 flex items-center justify-center p-4 w-full">
+    <div
+      id="carousel"
+      class="flex space-x-6 overflow-x-auto snap-x snap-mandatory w-full max-w-5xl px-6 py-10 relative"
+    >
+      <!-- Clone of Last 2 Cards (for backward loop) -->
+      <div class="card snap-center min-w-[300px] h-[400px] bg-yellow-400 rounded-3xl shadow-xl flex items-center justify-center text-black text-2xl font-bold">
+        Share Memories
+      </div>
+      <div class="card snap-center min-w-[300px] h-[400px] bg-orange-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
+        Our SG Culture
+      </div>
+
+      <!-- Real Cards -->
+      <div class="card snap-center min-w-[300px] h-[400px] bg-red-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
+        Spot the Difference
+      </div>
+      <div class="card snap-center min-w-[300px] h-[400px] bg-green-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
+        Virtual Tours
+      </div>
+      <div class="card snap-center min-w-[300px] h-[400px] bg-blue-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
+        Discover Our Local Food
+      </div>
+      <div class="card snap-center min-w-[300px] h-[400px] bg-yellow-400 rounded-3xl shadow-xl flex items-center justify-center text-black text-2xl font-bold">
+        Share Memories
+      </div>
+      <div class="card snap-center min-w-[300px] h-[400px] bg-orange-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
+        Our SG Culture
+      </div>
+      <div class="card snap-center min-w-[300px] h-[400px] bg-red-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
+        Spot the Difference
+      </div>
+      <div class="card snap-center min-w-[300px] h-[400px] bg-green-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
+        Virtual Tours
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    const carousel = document.getElementById('carousel');
+    const cards = carousel.querySelectorAll('.card');
+    const cardWidth = 300 + 24; // card + margin-right (1.5rem)
+    const totalRealCards = 5;
+
+    // Start at first real card (3rd visible card, index 2)
+    carousel.scrollLeft = cardWidth * 2;
+
+    function updateRotation() {
+      const center = carousel.scrollLeft + carousel.offsetWidth / 2;
+      cards.forEach(card => {
+        const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+        const distance = Math.abs(center - cardCenter);
+        const maxRotation = 15;
+        const rotation = Math.min(maxRotation, distance / 10);
+        const direction = center > cardCenter ? 1 : -1;
+        const scale = 1 - Math.min(0.3, distance / 1000);
+        card.style.transform = `rotateY(${rotation * direction}deg) scale(${scale})`;
+      });
+    }
+
+    function loopScroll() {
+      const index = Math.round(carousel.scrollLeft / cardWidth);
+
+      // If user scrolls before first real card, jump to end
+      if (index <= 1) {
+        carousel.scrollLeft = cardWidth * (totalRealCards + 1);
+      }
+
+      // If user scrolls after last real card, jump to start
+      else if (index >= totalRealCards + 2) {
+        carousel.scrollLeft = cardWidth * 2;
+      }
+    }
+
+    carousel.addEventListener('scroll', () => {
+      updateRotation();
+      clearTimeout(carousel._loopTimer);
+      carousel._loopTimer = setTimeout(loopScroll, 60);
+    });
+
+    updateRotation();
+  </script>
+
+</body>
+</html>
