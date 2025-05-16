@@ -14,18 +14,50 @@
     const video = document.getElementById('camera');
     const toggleButton = document.getElementById('toggleCamera');
     let stream = null;
-    async function startCamera() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' }
-        });
-        video.srcObject = stream;
-        toggleButton.textContent = 'Turn Off Camera';
-        console.log('Stream acquired');
-      } catch (err) {
-        console.error('Camera error:', err);
-        alert('Camera error: ' + err.message);
-      }
+
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    });
+    console.log('Stream acquired:', stream);
+
+    scene = document.createElement('a-scene');
+    scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false;');
+    scene.setAttribute('embedded', '');
+
+    // Add a test box
+    const box = document.createElement('a-box');
+    box.setAttribute('color', 'red');
+    box.setAttribute('position', '0 0 -1');
+    scene.appendChild(box);
+
+    const camera = document.createElement('a-entity');
+    camera.setAttribute('camera', '');
+    scene.appendChild(camera);
+
+    document.body.appendChild(scene);
+    scene.addEventListener('loaded', () => console.log('A-Frame scene loaded'));
+    toggleButton.textContent = 'Turn Off Camera';
+  } catch (err) {
+    console.error('Camera error:', err);
+    alert('Camera error: ' + err.message);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
     }
     function stopCamera() {
       if (stream) {
