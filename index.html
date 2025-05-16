@@ -2,37 +2,44 @@
 <html>
   <head>
     <title>AR Video Viewer</title>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- MindAR + ThreeJS -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
+
     <style>
-      body { margin: 0; overflow: hidden; }
-      video { display: none; }
-      canvas { width: 100%; height: 100%; }
+      body, html {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      video {
+        display: none;
+      }
     </style>
   </head>
   <body>
     <video id="ar-video" src="video.mp4" loop muted playsinline></video>
 
-    <script type="module">
-      import { MindARThree } from "https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js";
-
-      const startAR = async () => {
-        const mindarThree = new MindARThree({
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const mindarThree = new window.MINDAR.IMAGE.MindARThree({
           container: document.body,
-          imageTargetSrc: "./targets.mind",
+          imageTargetSrc: "targets.mind"
         });
 
         const { renderer, scene, camera } = mindarThree;
 
-        const anchor = mindarThree.addAnchor(0);
+        const anchor = mindarThree.addAnchor(0); // 0 = first target
+
         const video = document.getElementById("ar-video");
         const texture = new THREE.VideoTexture(video);
-        const geometry = new THREE.PlaneGeometry(1, 0.5625); // 16:9 video ratio
+        const geometry = new THREE.PlaneGeometry(1, 0.5625); // 16:9 ratio
         const material = new THREE.MeshBasicMaterial({ map: texture });
-        const plane = new THREE.Mesh(geometry, material);
-        plane.rotation.x = -Math.PI / 2; // adjust orientation if needed
 
+        const plane = new THREE.Mesh(geometry, material);
         anchor.group.add(plane);
 
         anchor.onTargetFound = () => {
@@ -47,9 +54,7 @@
         renderer.setAnimationLoop(() => {
           renderer.render(scene, camera);
         });
-      };
-
-      startAR();
+      });
     </script>
   </body>
 </html>
