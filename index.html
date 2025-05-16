@@ -25,7 +25,7 @@
       width: 100%;
       height: 100%;
       z-index: 0;
-      pointer-events: none; /* optional: disables interaction */
+      pointer-events: none;
     }
 
     #controls {
@@ -37,8 +37,8 @@
     }
 
     #toggle-button {
-      padding: 30px 60px;
-      font-size: 36px;
+      padding: 10px 20px;
+      font-size: 18px;
       background-color: #2196f3;
       color: white;
       border: none;
@@ -46,22 +46,22 @@
       cursor: pointer;
     }
 
-  #video-player {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  display: none;
-  z-index: 999;
-}
+    #video-player {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      display: none;
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
 
   <div id="controls">
-    <button id="toggle-button">Start Camera1</button>
+    <button id="toggle-button">Start Camera</button>
   </div>
 
   <video id="video-player" src="video.mp4" loop playsinline webkit-playsinline controls></video>
@@ -91,11 +91,15 @@
         anchor.onTargetFound = () => {
           videoPlayer.style.display = "block";
           videoPlayer.play();
+          renderer.setAnimationLoop(null); // pause rendering to hide camera feed
         };
 
         anchor.onTargetLost = () => {
           videoPlayer.pause();
           videoPlayer.style.display = "none";
+          renderer.setAnimationLoop(() => {
+            renderer.render(scene, camera);
+          });
         };
 
         await mindarThree.start();
