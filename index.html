@@ -67,58 +67,73 @@
   <video id="video-player" src="video.mp4" loop playsinline webkit-playsinline controls></video>
   <div id="ar-container"></div>
 
-  <script>
-    const toggleButton = document.getElementById("toggle-button");
-    const videoPlayer = document.getElementById("video-player");
-    const arContainer = document.getElementById("ar-container");
+<script>
+  const toggleButton = document.getElementById("toggle-button");
+  const videoPlayer = document.getElementById("video-player");
+  const arContainer = document.getElementById("ar-container");
 
-    let mindarThree = null;
-    let started = false;
+  let mindarThree = null;
+  let started = false;
+  let hiddenCameraElements = [];
 
-    toggleButton.addEventListener("click", async () => {
-      if (!started) {
-        // Start AR
-        toggleButton.textContent = "Stop Camera";
+  toggleButton.addEventListener("click", async () => {
+    if (!started) {
+      toggleButton.textContent = "Stop Camera";
 
-        mindarThree = new window.MINDAR.IMAGE.MindARThree({
-          container: arContainer,
-          imageTargetSrc: "targets.mind"
+      mindarThree = new window.MINDAR.IMAGE.MindARThree({
+        container: arContainer,
+        imageTargetSrc: "targets.mind"
+      });
+
+      const { renderer, scene, camera, video } = mindarThree;
+      const anchor = mindarThree.addAnchor(0);
+
+      anchor.onTargetFound = () => {
+        videoPlayer.style.display = "block";
+        videoPlayer.play();
+
+        // Hide camera feed: canvas and video elements
+        hiddenCameraElements = arContainer.querySelectorAll("canvas, video");
+        hiddenCameraElements.forEach(el => {
+          el.style.display = "none";
         });
+      };
 
-        const { renderer, scene, camera } = mindarThree;
-        const anchor = mindarThree.addAnchor(0);
-
-        anchor.onTargetFound = () => {
-          videoPlayer.style.display = "block";
-          videoPlayer.play();
-          renderer.setAnimationLoop(null); // pause rendering to hide camera feed
-        };
-
-        anchor.onTargetLost = () => {
-          videoPlayer.pause();
-          videoPlayer.style.display = "none";
-          renderer.setAnimationLoop(() => {
-            renderer.render(scene, camera);
-          });
-        };
-
-        await mindarThree.start();
-        started = true;
-
-        renderer.setAnimationLoop(() => {
-          renderer.render(scene, camera);
-        });
-      } else {
-        // Stop AR
-        toggleButton.textContent = "Start Camera";
+      anchor.onTargetLost = () => {
         videoPlayer.pause();
         videoPlayer.style.display = "none";
-        await mindarThree.stop();
-        mindarThree = null;
-        started = false;
+
+        // Show AR camera feed again
+        hiddenCameraElements.forEach(el => {
+          el.style.display = "block";
+        });
+      };
+
+      await mindarThree.start();
+      started = true;
+
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
+      });
+    } else {
+      toggleButton.textContent = "Start Camera";
+
+      videoPlayer.pause();
+      videoPlayer.style.display = "none";
+
+      if (hiddenCameraElements.length > 0) {
+        hiddenCameraElements.forEach(el => {
+          el.style.display = "block";
+        });
       }
-    });
-  </script>
+
+      await mindarThree.stop();
+      mindarThree = null;
+      started = false;
+    }
+  });
+</script>
+
 
 </body>
 </html>
