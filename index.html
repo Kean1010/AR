@@ -40,36 +40,7 @@
       id="carousel"
       class="flex space-x-6 overflow-x-auto snap-x snap-mandatory w-full px-6 py-4"
     >
-      <!-- Clone of Last 2 Cards (for backward loop) -->
-      <div class="card snap-center min-w-[300px] h-[400px] bg-yellow-400 rounded-3xl shadow-xl flex items-center justify-center text-black text-2xl font-bold">
-        Share Memories
-      </div>
-      <div class="card snap-center min-w-[300px] h-[400px] bg-orange-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
-        Our SG Culture
-      </div>
-
-      <!-- Real Cards -->
-      <div class="card snap-center min-w-[300px] h-[400px] bg-red-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
-        Spot the Difference
-      </div>
-      <div class="card snap-center min-w-[300px] h-[400px] bg-green-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
-        Virtual Tours
-      </div>
-      <div class="card snap-center min-w-[300px] h-[400px] bg-blue-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
-        Discover Our Local Food
-      </div>
-      <div class="card snap-center min-w-[300px] h-[400px] bg-yellow-400 rounded-3xl shadow-xl flex items-center justify-center text-black text-2xl font-bold">
-        Share Memories
-      </div>
-      <div class="card snap-center min-w-[300px] h-[400px] bg-orange-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
-        Our SG Culture
-      </div>
-      <div class="card snap-center min-w-[300px] h-[400px] bg-red-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
-        Spot the Difference
-      </div>
-      <div class="card snap-center min-w-[300px] h-[400px] bg-green-500 rounded-3xl shadow-xl flex items-center justify-center text-white text-2xl font-bold">
-        Virtual Tours
-      </div>
+      <!-- Cards are dynamically generated here -->
     </div>
 
     <!-- Right Button -->
@@ -91,17 +62,35 @@
     { color: 'bg-orange-500', text: 'Our SG Culture', textColor: 'text-white' }
   ];
 
+  // Map text to link
+  cardData.forEach(data => data.link = {
+    'Spot the Difference': 'Game2.html',
+    'Virtual Tours': 'VR.html',
+    'Discover Our Local Food': 'Game1.html',
+    'Share Memories': 'AR.html',
+    'Our SG Culture': 'quiz.html'
+  }[data.text]);
+
   const cardWidth = 300 + 24; // width + margin
   const clonesPerSide = 3; // Number of times to repeat cards on each side
-  const totalClones = cardData.length * clonesPerSide * 2;
 
   // Function to create and append card elements
   function createCards() {
     for (let i = 0; i < clonesPerSide * 2 + 1; i++) {
       cardData.forEach(data => {
         const card = document.createElement('div');
-        card.className = `card snap-center min-w-[300px] h-[400px] ${data.color} ${data.textColor} rounded-3xl shadow-xl flex items-center justify-center text-2xl font-bold`;
+        card.className = `card snap-center min-w-[300px] h-[400px] ${data.color} ${data.textColor} rounded-3xl shadow-xl flex items-center justify-center text-2xl font-bold cursor-pointer`;
         card.textContent = data.text;
+        card.setAttribute('data-link', data.link);
+
+        // Add click listener to redirect
+        card.addEventListener('click', () => {
+          const link = card.getAttribute('data-link');
+          if (link) {
+            window.location.href = link;
+          }
+        });
+
         carousel.appendChild(card);
       });
     }
@@ -153,9 +142,6 @@
     updateRotation();
   };
 </script>
- 
-
-
 
 </body>
 </html>
