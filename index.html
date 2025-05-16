@@ -3,14 +3,14 @@
   <head>
     <title>AR Video Viewer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- MindAR + ThreeJS -->
+
+    <!-- MindAR and Three.js -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
 
     <style>
-      body, html {
+      html, body {
         margin: 0;
         padding: 0;
         overflow: hidden;
@@ -18,10 +18,25 @@
         height: 100%;
       }
       #ar-container {
-        position: relative;
         width: 100%;
         height: 100%;
-        background: black;
+        position: absolute;
+        top: 0; left: 0;
+        display: none;
+      }
+      #start-button {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 1em 2em;
+        font-size: 1.2em;
+        z-index: 999;
+        background: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
       }
       video {
         display: none;
@@ -30,12 +45,19 @@
   </head>
   <body>
     <div id="ar-container"></div>
+    <button id="start-button">Start AR</button>
     <video id="ar-video" src="video.mp4" loop muted playsinline></video>
 
     <script>
-      window.addEventListener("DOMContentLoaded", async () => {
+      const startButton = document.getElementById("start-button");
+      const arContainer = document.getElementById("ar-container");
+
+      startButton.addEventListener("click", async () => {
+        startButton.style.display = "none"; // hide the button
+        arContainer.style.display = "block"; // show AR container
+
         const mindarThree = new window.MINDAR.IMAGE.MindARThree({
-          container: document.querySelector("#ar-container"),
+          container: arContainer,
           imageTargetSrc: "targets.mind"
         });
 
@@ -44,20 +66,14 @@
         const anchor = mindarThree.addAnchor(0);
         const video = document.getElementById("ar-video");
         const texture = new THREE.VideoTexture(video);
-
-        const geometry = new THREE.PlaneGeometry(1, 0.5625);
+        const geometry = new THREE.PlaneGeometry(1, 0.5625); // 16:9
         const material = new THREE.MeshBasicMaterial({ map: texture });
-        const plane = new THREE.Mesh(geometry, material);
 
+        const plane = new THREE.Mesh(geometry, material);
         anchor.group.add(plane);
 
-        anchor.onTargetFound = () => {
-          video.play();
-        };
-
-        anchor.onTargetLost = () => {
-          video.pause();
-        };
+        anchor.onTargetFound = () => video.play();
+        anchor.onTargetLost = () => video.pause();
 
         await mindarThree.start();
         renderer.setAnimationLoop(() => {
