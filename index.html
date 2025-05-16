@@ -1,99 +1,85 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>AR Video Viewer</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Video Overlay App</title>
+  <!-- A-Frame for 3D/AR rendering -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <!-- AR.js for marker-based augmented reality -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    #ar-scene {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <!-- A-Frame scene -->
+  <a-scene
+    id="ar-scene"
+    vr-mode-ui="enabled: false"
+    arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720;"
+    embedded
+  >
+    <!-- Marker for AR tracking (Hiro marker) -->
+    <a-marker preset="hiro">
+      <!-- Video entity -->
+      <a-video
+        src="video.mp4"
+        width="2"
+        height="1.125"
+        position="0 0 0"
+        rotation="0 0 0"
+        autoplay="true"
+        loop="true"
+      ></a-video>
+    </a-marker>
 
-    <!-- MindAR and Three.js -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
+    <!-- Camera entity -->
+    <a-entity camera></a-entity>
+  </a-scene>
 
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        width: 100%;
-        height: 100%;
-        background: black;
+  <script>
+    // Ensure camera access and handle errors
+    document.addEventListener('DOMContentLoaded', () => {
+      const scene = document.querySelector('a-scene');
+      if (!scene) {
+        alert('A-Frame scene not found!');
+        return;
       }
-      #ar-container {
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0; left: 0;
-        display: none;
-      }
-      #start-button {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        padding: 1em 2em;
-        font-size: 1.2em;
-        z-index: 999;
-        background: #2196f3;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-      }
-      video {
-        display: none;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="ar-container"></div>
-    <button id="start-button">Start AR</button>
-    <video id="ar-video" src="video.mp4" loop muted playsinline></video>
 
-    <script>
-      const startButton = document.getElementById("start-button");
-      const arContainer = document.getElementById("ar-container");
+      // Check if camera is accessible
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then((stream) => {
+          console.log('Camera access granted');
+        })
+        .catch((err) => {
+          alert('Camera access denied: ' + err.message);
+        });
 
-      startButton.addEventListener("click", function () {
-        startButton.style.display = "none";
-        arContainer.style.display = "block";
-        startAR();
+      // Handle AR.js marker detection
+      scene.addEventListener('markerFound', () => {
+        console.log('Marker detected');
+        const video = document.querySelector('a-video');
+        if (video) {
+          video.play();
+        }
       });
 
-      async function startAR() {
-        try {
-          const mindarThree = new window.MINDAR.IMAGE.MindARThree({
-            container: arContainer,
-            imageTargetSrc: "targets.mind",
-            cameraConfig: {
-              facingMode: { exact: "environment" } // Force rear camera
-            }
-          });
-
-          const { renderer, scene, camera } = mindarThree;
-
-          const anchor = mindarThree.addAnchor(0);
-          const video = document.getElementById("ar-video");
-          const texture = new THREE.VideoTexture(video);
-          const geometry = new THREE.PlaneGeometry(1, 0.5625); // 16:9 ratio
-          const material = new THREE.MeshBasicMaterial({ map: texture });
-          const plane = new THREE.Mesh(geometry, material);
-          anchor.group.add(plane);
-
-          anchor.onTargetFound = () => video.play();
-          anchor.onTargetLost = () => video.pause();
-
-          await mindarThree.start();
-
-          renderer.setAnimationLoop(() => {
-            renderer.render(scene, camera);
-          });
-        } catch (error) {
-          alert("AR failed to start: " + error.message);
-          console.error("AR start error:", error);
-          startButton.style.display = "block";
-          arContainer.style.display = "none";
+      scene.addEventListener('markerLost', () => {
+        console.log('Marker lost');
+        const video = document.querySelector('a-video');
+        if (video) {
+          video.pause();
         }
-      }
-    </script>
-  </body>
+      });
+    });
+  </script>
+</body>
 </html>
