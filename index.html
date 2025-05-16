@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR Video Overlay App</title>
+  <title>AR Video Overlay with Camera Button</title>
   <!-- A-Frame for 3D/AR rendering -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <!-- AR.js for marker-based augmented reality -->
@@ -12,14 +12,37 @@
     body {
       margin: 0;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #000;
     }
     #ar-scene {
       width: 100vw;
       height: 100vh;
+      display: none; /* Hidden until camera is activated */
+    }
+    #activate-camera {
+      padding: 15px 30px;
+      font-size: 18px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 10;
+    }
+    #activate-camera:hover {
+      background: #0056b3;
     }
   </style>
 </head>
 <body>
+  <!-- Button to activate camera -->
+  <button id="activate-camera">Activate Camera</button>
+
   <!-- A-Frame scene -->
   <a-scene
     id="ar-scene"
@@ -27,8 +50,8 @@
     arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720;"
     embedded
   >
-    <!-- Marker for AR tracking (Hiro marker) -->
-    <a-marker preset="hiro">
+    <!-- Custom marker using target.mind -->
+    <a-marker type="pattern" url="target.mind">
       <!-- Video entity -->
       <a-video
         src="video.mp4"
@@ -46,24 +69,30 @@
   </a-scene>
 
   <script>
-    // Ensure camera access and handle errors
     document.addEventListener('DOMContentLoaded', () => {
-      const scene = document.querySelector('a-scene');
-      if (!scene) {
-        alert('A-Frame scene not found!');
+      const scene = document.querySelector('#ar-scene');
+      const activateButton = document.querySelector('#activate-camera');
+
+      if (!scene || !activateButton) {
+        alert('Required elements not found!');
         return;
       }
 
-      // Check if camera is accessible
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then((stream) => {
-          console.log('Camera access granted');
-        })
-        .catch((err) => {
-          alert('Camera access denied: ' + err.message);
-        });
+      // Handle button click to activate camera
+      activateButton.addEventListener('click', () => {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+          .then((stream) => {
+            console.log('Camera access granted');
+            // Show AR scene and hide button
+            scene.style.display = 'block';
+            activateButton.style.display = 'none';
+          })
+          .catch((err) => {
+            alert('Camera access denied: ' + err.message);
+          });
+      });
 
-      // Handle AR.js marker detection
+      // Handle marker detection
       scene.addEventListener('markerFound', () => {
         console.log('Marker detected');
         const video = document.querySelector('a-video');
