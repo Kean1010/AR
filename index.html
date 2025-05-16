@@ -1,100 +1,139 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AR Video Tracking</title>
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar-js@1.2.6/dist/mindar-image-three.prod.js"></script>
+  <meta charset="UTF-8" />
+  <title>AR Video Demo</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.131.3/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
+
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
       overflow: hidden;
+      height: 100%;
+      background-color: black;
+      font-family: sans-serif;
     }
+
     #ar-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    #controls {
+      position: absolute;
+      top: 20px;
+      width: 100%;
+      text-align: center;
+      z-index: 10;
+    }
+
+    #toggle-button {
+      padding: 30px 60px;
+      font-size: 28px;
+      background-color: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #video-player {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100vw;
       height: 100vh;
-    }
-    #toggle-button {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 10;
-      padding: 10px;
-      font-size: 16px;
-    }
-    #video-player {
+      object-fit: cover;
       display: none;
+      z-index: 999;
     }
   </style>
 </head>
 <body>
-  <button id="toggle-button">Start Camera</button>
+
+  <div id="controls">
+    <button id="toggle-button">Start Camera</button>
+  </div>
+
+  <video id="video-player" src="video.mp4" loop playsinline webkit-playsinline controls></video>
   <div id="ar-container"></div>
-  <video id="video-player" src="video.mp4" loop></video>
-  <script>
-    const toggleButton = document.getElementById("toggle-button");
-    const videoPlayer = document.getElementById("video-player");
-    const arContainer = document.getElementById("ar-container");
 
-    let mindarThree = null;
-    let started = false;
-    let hiddenCameraElements = [];
+<script>
+  const toggleButton = document.getElementById("toggle-button");
+  const videoPlayer = document.getElementById("video-player");
+  const arContainer = document.getElementById("ar-container");
 
-    // Check if camera access is available
-    async function checkCameraAccess() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.getTracks().forEach(track => track.stop());
-        console.log("Camera access granted");
-        return true;
-      } catch (err) {
-        console.error("Camera access denied or unavailable:", err);
-        alert("Camera access is required. Please allow camera permissions and ensure you're using HTTPS or localhost.");
-        return false;
+  let mindarThree = null;
+  let started = false;
+  let hiddenCameraElements = [];
+
+  toggleButton.addEventListener("click", async () => {
+    if (!started) {
+      toggleButton.textContent = "Stop Camera";
+
+      mindarThree = new window.MINDAR.IMAGE.MindARThree({
+        container: arContainer,
+        imageTargetSrc: "targets.mind"
+      });
+
+      const { renderer, scene, camera, video } = mindarThree;
+      const anchor = mindarThree.addAnchor(0);
+
+      anchor.onTargetFound = () => {
+        videoPlayer.style.display = "block";
+        videoPlayer.play();
+
+        // Hide camera feed: canvas and video elements
+        hiddenCameraElements = arContainer.querySelectorAll("canvas, video");
+        hiddenCameraElements.forEach(el => {
+          el.style.display = "none";
+        });
+      };
+
+      anchor.onTargetLost = () => {
+        videoPlayer.pause();
+        videoPlayer.style.display = "none";
+
+        // Show AR camera feed again
+        hiddenCameraElements.forEach(el => {
+          el.style.display = "block";
+        });
+      };
+
+      await mindarThree.start();
+      started = true;
+
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
+      });
+    } else {
+      toggleButton.textContent = "Start Camera";
+
+      videoPlayer.pause();
+      videoPlayer.style.display = "none";
+
+      if (hiddenCameraElements.length > 0) {
+        hiddenCameraElements.forEach(el => {
+          el.style.display = "block";
+        });
       }
+
+      await mindarThree.stop();
+      mindarThree = null;
+      started = false;
     }
+  });
+</script>
 
-    // Check if MindAR is loaded
-    function checkMindAR() {
-      if (!window.MINDAR || !window.MINDAR.IMAGE) {
-        console.error("MindAR.IMAGE is not available. Ensure the MindAR script loaded correctly.");
-        alert("MindAR library failed to load. Check the console and verify the CDN URL.");
-        return false;
-      }
-      console.log("MindAR.IMAGE is available");
-      return true;
-    }
 
-    toggleButton.addEventListener("click", async () => {
-      if (!started) {
-        // Verify camera access
-        const hasCameraAccess = await checkCameraAccess();
-        if (!hasCameraAccess) return;
-
-        // Verify MindAR
-        if (!checkMindAR()) return;
-
-        toggleButton.textContent = "Stop Camera";
-        console.log("Initializing MindAR...");
-
-        try {
-          // Initialize MindAR
-          mindarThree = new window.MINDAR.IMAGE.MindARThree({
-            container: arContainer,
-            imageTargetSrc: "targets.mind"
-          });
-
-          const { renderer, scene, camera } = mindarThree;
-          const anchor = mindarThree.addAnchor(0);
-
-          console.log("MindAR initialized, setting up scene...");
-
-          // Create a video texture
-          const videoTexture = new THREE.VideoTexture(videoPlayer);
-          videoTexture.minFilter = THREE.LinearFilter;
-          videoTexture.magFilter = THREE.LinearFilter;
-
-          // Create a material with the video texture
-          const videoMaterial = new THREE.MeshBasicMaterial({
-            map্র
-
-System: * Today's date and time is 06:00 AM +08 on Saturday, May 17, 2025.
+</body>
+</html>
