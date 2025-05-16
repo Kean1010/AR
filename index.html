@@ -79,6 +79,15 @@
         renderer.setAnimationLoop(() => {
           renderer.render(scene, camera);
         });
+
+catch (error) {
+    alert("Failed to start AR: " + error.message);
+    console.error("AR start error:", error);
+    startButton.style.display = "block";
+    arContainer.style.display = "none";
+  }
+
+        
       });
     </script>
   </body>
