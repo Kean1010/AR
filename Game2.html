@@ -1,23 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>404 - Page Not Found</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>Spot the Mistake</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    #game-container {
+      position: relative;
+      display: inline-block;
+    }
+    #main-image {
+      max-width: 100%;
+      height: auto;
+    }
+    .mistake {
+      position: absolute;
+      border-radius: 50%;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+    }
+    .found-circle {
+      position: absolute;
+      border: 3px solid limegreen;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #hud {
+      margin: 10px;
+      font-size: 18px;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen text-center px-6">
-  
-  <img src="work.png" alt="Work in Progress" class="w-64 h-64 object-contain mb-6" />
-  
-  <h1 class="text-4xl font-bold text-red-600 mb-4">404 - Page Not Found</h1>
-  <p class="text-xl text-gray-800">
-    ITE College West - 2025 Student Leaders Forum Team work in progress
-  </p>
+<body>
+  <h1>Spot the Mistake</h1>
 
-  <a href="index.html" class="mt-8 inline-block bg-red-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-red-700 transition">
-    Go Back Home
-  </a>
+  <div id="hud">
+    Mistakes Found: <span id="found">0</span>/7 |
+    Time Left: <span id="timer">5:00</span>
+  </div>
 
+  <div id="game-container">
+    <img id="main-image" src="game.jpg" alt="Spot the Mistake">
+
+    <!-- Mistake zones -->
+    <div class="mistake" style="top: 32px; left: 208px; width: 40px; height: 40px;"></div>
+    <div class="mistake" style="top: 274px; left: 518px; width: 40px; height: 40px;"></div>
+    <div class="mistake" style="top: 366px; left: 4px; width: 40px; height: 40px;"></div>
+    <div class="mistake" style="top: 289px; left: 686px; width: 40px; height: 40px;"></div>
+    <div class="mistake" style="top: 741px; left: 66px; width: 29px; height: 27px;"></div>
+    <div class="mistake" style="top: 731px; left: 604px; width: 29px; height: 33px;"></div>
+    <div class="mistake" style="top: 835px; left: 277px; width: 149px; height: 122px;"></div>
+    <div class="mistake" style="top: 500px; left: 400px; width: 40px; height: 40px;"></div>
+    <div class="mistake" style="top: 600px; left: 800px; width: 40px; height: 40px;"></div>
+  </div>
+
+  <script>
+    const mistakes = document.querySelectorAll('.mistake');
+    let found = 0;
+    let timeLeft = 300; // 5 minutes
+
+    function updateTimer() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      document.getElementById('timer').textContent =
+        `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      timeLeft--;
+      if (timeLeft < 0) {
+        clearInterval(timerInterval);
+        if (found < 7) {
+          alert('⏰ Sorry, please try again.');
+        }
+      }
+    }
+
+    mistakes.forEach(mistake => {
+      mistake.addEventListener('click', () => {
+        if (!mistake.classList.contains('found')) {
+          mistake.classList.add('found');
+          found++;
+          document.getElementById('found').textContent = found;
+
+          // Add green border circle
+          const circle = document.createElement('div');
+          circle.className = 'found-circle';
+          circle.style.width = mistake.offsetWidth + 'px';
+          circle.style.height = mistake.offsetHeight + 'px';
+          circle.style.left = mistake.style.left;
+          circle.style.top = mistake.style.top;
+          document.getElementById('game-container').appendChild(circle);
+
+          if (found === 7) {
+            alert('🎉 Congratulations, you win!');
+            clearInterval(timerInterval);
+          }
+        }
+      });
+    });
+
+    const timerInterval = setInterval(updateTimer, 1000);
+    updateTimer(); // start immediately
+  </script>
 </body>
 </html>
