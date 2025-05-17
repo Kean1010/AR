@@ -130,70 +130,89 @@
   <!-- Bottom Footer -->
   <div id="footer-banner">brought to you by ITE College West</div>
 
-  <script>
-    const toggleButton = document.getElementById("toggle-button");
-    const videoPlayer = document.getElementById("video-player");
-    const arContainer = document.getElementById("ar-container");
+<script>
+  const toggleButton = document.getElementById("toggle-button");
+  const videoPlayer = document.getElementById("video-player");
+  const arContainer = document.getElementById("ar-container");
 
-    let mindarThree = null;
-    let started = false;
-    let hiddenCameraElements = [];
+  const videoSources = [
+    "video1.mp4", // Target 0
+    "video2.mp4", // Target 1
+    "video3.mp4", // Target 2
+    "video4.mp4", // Target 3
+    "video5.mp4"  // Target 4
+  ];
 
-    toggleButton.addEventListener("click", async () => {
-      if (!started) {
-        toggleButton.textContent = "Stop Camera";
+  let mindarThree = null;
+  let started = false;
+  let hiddenCameraElements = [];
+  let currentIndex = null;
 
-        mindarThree = new window.MINDAR.IMAGE.MindARThree({
-          container: arContainer,
-          imageTargetSrc: "targets.mind"
-        });
+  toggleButton.addEventListener("click", async () => {
+    if (!started) {
+      toggleButton.textContent = "Stop Camera";
 
-        const { renderer, scene, camera, video } = mindarThree;
-        const anchor = mindarThree.addAnchor(0);
+      mindarThree = new window.MINDAR.IMAGE.MindARThree({
+        container: arContainer,
+        imageTargetSrc: "targets.mind"
+      });
 
+      const { renderer, scene, camera } = mindarThree;
+
+      // Create one anchor per target image
+      const anchors = videoSources.map((_, index) => mindarThree.addAnchor(index));
+
+      anchors.forEach((anchor, index) => {
         anchor.onTargetFound = () => {
+          if (currentIndex !== index) {
+            videoPlayer.src = videoSources[index];
+            videoPlayer.load();
+            currentIndex = index;
+          }
+
           videoPlayer.style.display = "block";
           videoPlayer.play();
 
+          // Hide camera feed
           hiddenCameraElements = arContainer.querySelectorAll("canvas, video");
-          hiddenCameraElements.forEach(el => {
-            el.style.display = "none";
-          });
+          hiddenCameraElements.forEach(el => el.style.display = "none");
         };
 
         anchor.onTargetLost = () => {
           videoPlayer.pause();
           videoPlayer.style.display = "none";
 
-          hiddenCameraElements.forEach(el => {
-            el.style.display = "block";
-          });
+          // Show camera feed again
+          hiddenCameraElements.forEach(el => el.style.display = "block");
         };
+      });
 
-        await mindarThree.start();
-        started = true;
+      await mindarThree.start();
+      started = true;
 
-        renderer.setAnimationLoop(() => {
-          renderer.render(scene, camera);
-        });
-      } else {
-        toggleButton.textContent = "Start Camera";
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
+      });
 
-        videoPlayer.pause();
-        videoPlayer.style.display = "none";
+    } else {
+      toggleButton.textContent = "Start Camera";
 
-        if (hiddenCameraElements.length > 0) {
-          hiddenCameraElements.forEach(el => {
-            el.style.display = "block";
-          });
-        }
+      videoPlayer.pause();
+      videoPlayer.style.display = "none";
 
-        await mindarThree.stop();
-        mindarThree = null;
-        started = false;
+      if (hiddenCameraElements.length > 0) {
+        hiddenCameraElements.forEach(el => el.style.display = "block");
       }
-    });
-  </script>
+
+      await mindarThree.stop();
+      mindarThree = null;
+      started = false;
+      currentIndex = null;
+    }
+  });
+</script>
+
+  
 
 </body>
 </html>
