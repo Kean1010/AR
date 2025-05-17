@@ -14,8 +14,36 @@
       padding: 0;
       overflow: hidden;
       height: 100%;
-      background-color: black;
       font-family: sans-serif;
+      background-color: black;
+    }
+
+    /* Top banner */
+    #top-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: #b91c1c; /* red-700 */
+      color: white;
+      text-align: center;
+      padding: 16px;
+      font-size: 24px;
+      font-weight: bold;
+      z-index: 1000;
+    }
+
+    /* Red border frame */
+    #ar-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 12px solid #dc2626; /* Tailwind red-600 */
+      box-sizing: border-box;
+      z-index: 1;
+      pointer-events: none;
     }
 
     #ar-container {
@@ -28,22 +56,29 @@
       pointer-events: none;
     }
 
+    /* Camera toggle button */
     #controls {
       position: absolute;
-      top: 20px;
+      bottom: 100px;
       width: 100%;
       text-align: center;
-      z-index: 10;
+      z-index: 100;
     }
 
     #toggle-button {
-      padding: 30px 60px;
+      padding: 20px 50px;
       font-size: 28px;
-      background-color: #2196f3;
+      background-color: #dc2626; /* Tailwind red-600 */
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 10px;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: background-color 0.3s;
+    }
+
+    #toggle-button:hover {
+      background-color: #b91c1c; /* Tailwind red-700 */
     }
 
     #video-player {
@@ -56,84 +91,109 @@
       display: none;
       z-index: 999;
     }
+
+    /* Bottom banner */
+    #footer-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: #b91c1c;
+      color: white;
+      text-align: center;
+      padding: 14px;
+      font-size: 20px;
+      font-weight: bold;
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
 
+  <!-- Top Banner -->
+  <div id="top-banner">Scan to watch videos</div>
+
+  <!-- Red frame overlay -->
+  <div id="ar-frame"></div>
+
+  <!-- AR container -->
+  <div id="ar-container"></div>
+
+  <!-- Video Player -->
+  <video id="video-player" src="video.mp4" loop playsinline webkit-playsinline controls></video>
+
+  <!-- Camera Toggle Button -->
   <div id="controls">
     <button id="toggle-button">Start Camera</button>
   </div>
 
-  <video id="video-player" src="video.mp4" loop playsinline webkit-playsinline controls></video>
-  <div id="ar-container"></div>
+  <!-- Bottom Footer -->
+  <div id="footer-banner">brought to you by ITE College West</div>
 
-<script>
-  const toggleButton = document.getElementById("toggle-button");
-  const videoPlayer = document.getElementById("video-player");
-  const arContainer = document.getElementById("ar-container");
+  <script>
+    const toggleButton = document.getElementById("toggle-button");
+    const videoPlayer = document.getElementById("video-player");
+    const arContainer = document.getElementById("ar-container");
 
-  let mindarThree = null;
-  let started = false;
-  let hiddenCameraElements = [];
+    let mindarThree = null;
+    let started = false;
+    let hiddenCameraElements = [];
 
-  toggleButton.addEventListener("click", async () => {
-    if (!started) {
-      toggleButton.textContent = "Stop Camera";
+    toggleButton.addEventListener("click", async () => {
+      if (!started) {
+        toggleButton.textContent = "Stop Camera";
 
-      mindarThree = new window.MINDAR.IMAGE.MindARThree({
-        container: arContainer,
-        imageTargetSrc: "targets.mind"
-      });
-
-      const { renderer, scene, camera, video } = mindarThree;
-      const anchor = mindarThree.addAnchor(0);
-
-      anchor.onTargetFound = () => {
-        videoPlayer.style.display = "block";
-        videoPlayer.play();
-
-        // Hide camera feed: canvas and video elements
-        hiddenCameraElements = arContainer.querySelectorAll("canvas, video");
-        hiddenCameraElements.forEach(el => {
-          el.style.display = "none";
+        mindarThree = new window.MINDAR.IMAGE.MindARThree({
+          container: arContainer,
+          imageTargetSrc: "targets.mind"
         });
-      };
 
-      anchor.onTargetLost = () => {
+        const { renderer, scene, camera, video } = mindarThree;
+        const anchor = mindarThree.addAnchor(0);
+
+        anchor.onTargetFound = () => {
+          videoPlayer.style.display = "block";
+          videoPlayer.play();
+
+          hiddenCameraElements = arContainer.querySelectorAll("canvas, video");
+          hiddenCameraElements.forEach(el => {
+            el.style.display = "none";
+          });
+        };
+
+        anchor.onTargetLost = () => {
+          videoPlayer.pause();
+          videoPlayer.style.display = "none";
+
+          hiddenCameraElements.forEach(el => {
+            el.style.display = "block";
+          });
+        };
+
+        await mindarThree.start();
+        started = true;
+
+        renderer.setAnimationLoop(() => {
+          renderer.render(scene, camera);
+        });
+      } else {
+        toggleButton.textContent = "Start Camera";
+
         videoPlayer.pause();
         videoPlayer.style.display = "none";
 
-        // Show AR camera feed again
-        hiddenCameraElements.forEach(el => {
-          el.style.display = "block";
-        });
-      };
+        if (hiddenCameraElements.length > 0) {
+          hiddenCameraElements.forEach(el => {
+            el.style.display = "block";
+          });
+        }
 
-      await mindarThree.start();
-      started = true;
-
-      renderer.setAnimationLoop(() => {
-        renderer.render(scene, camera);
-      });
-    } else {
-      toggleButton.textContent = "Start Camera";
-
-      videoPlayer.pause();
-      videoPlayer.style.display = "none";
-
-      if (hiddenCameraElements.length > 0) {
-        hiddenCameraElements.forEach(el => {
-          el.style.display = "block";
-        });
+        await mindarThree.stop();
+        mindarThree = null;
+        started = false;
       }
-
-      await mindarThree.stop();
-      mindarThree = null;
-      started = false;
-    }
-  });
-</script>
-
+    });
+  </script>
 
 </body>
 </html>
