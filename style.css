@@ -134,6 +134,22 @@ header {
   transform: scale(0.95);
 }
 
+.required-ingredients {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.required-ingredient {
+  display: inline-block;
+  margin: 0 5px;
+  padding: 5px 10px;
+  background: #f0f0f0;
+  border-radius: 5px;
+  text-transform: capitalize;
+}
+
 .overlay {
   position: fixed;
   top: 0;
@@ -156,6 +172,11 @@ header {
 
 .overlay-content h2 {
   font-size: 2rem;
+}
+
+.overlay-content p {
+  font-size: 1rem;
+  margin: 15px 0;
 }
 
 /* Responsive Mobile Layout */
@@ -208,5 +229,14 @@ header {
   #serve-button {
     font-size: 16px;
     padding: 10px 16px;
+  }
+
+  .required-ingredients {
+    font-size: 0.8rem;
+  }
+
+  .required-ingredient {
+    padding: 4px 8px;
+    margin: 2px;
   }
 }

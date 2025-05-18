@@ -1,6 +1,7 @@
 const dishes = {
   "Nasi Lemak": ["rice", "egg", "ikan_bilis", "peanuts", "cucumber", "sambal", "chicken"],
-  "Chicken Rice": ["rice", "chicken", "cucumber", "soy_sauce", "soup"]
+  "Chicken Rice": ["rice", "chicken", "cucumber", "soy_sauce", "soup"],
+  "Laksa": ["beehoon", "gravy", "fishcake", "prawns", "cockles"]
 };
 
 const allIngredients = Array.from(new Set(Object.values(dishes).flat()));
@@ -13,6 +14,7 @@ const serveButton = document.getElementById("serve-button");
 const scoreEl = document.getElementById("score");
 const timerEl = document.getElementById("timer");
 const customerFace = document.getElementById("customer-face");
+const requiredIngredientsEl = document.getElementById("required-ingredients");
 
 const gameOverScreen = document.getElementById("game-over");
 const finalScoreEl = document.getElementById("final-score");
@@ -30,14 +32,29 @@ let score = 0;
 let timeLeft = 300;
 let timerInterval;
 
+const foodHistories = {
+  "Nasi Lemak": "Nasi Lemak, a fragrant rice dish cooked in coconut milk, has its roots in Malay culture and was traditionally served as a breakfast dish in Singapore. Its name, meaning 'rich rice,' reflects the creamy texture from coconut milk. It became popular in the early 20th century among Malay communities and evolved with Chinese and Indian influences, incorporating ingredients like sambal and fried chicken.",
+  "Chicken Rice": "Hainanese Chicken Rice, one of Singapore's national dishes, was brought by Hainanese immigrants in the 19th century. Adapted from the Chinese Wenchang chicken, it became a hawker staple in the 1950s. The dish's simplicity—poached or steamed chicken with fragrant rice cooked in chicken broth—belies its cultural significance as a comfort food across Singapore's diverse communities.",
+  "Laksa": "Laksa, a spicy noodle soup, reflects Singapore's Peranakan heritage, blending Chinese and Malay culinary traditions. Originating in the 19th century, it combines coconut milk, curry spices, and ingredients like prawns and fishcake. Katong Laksa, a Singaporean variant, became iconic in the 1960s, with its rich, spicy broth and short noodles, symbolizing the city-state's fusion of cultures."
+};
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 function createIngredientTray() {
   ingredientTray.innerHTML = "";
-  allIngredients.forEach(ingredient => {
+  const shuffledIngredients = shuffleArray([...allIngredients]);
+  shuffledIngredients.forEach(ingredient => {
     const img = document.createElement("img");
     img.src = `assets/ingredients/${ingredient}.png`;
     img.className = "ingredient";
     img.dataset.name = ingredient;
-    img.style.position = "relative"; // for moving during drag
+    img.style.position = "relative"; // for tray positioning
 
     // Pointer events for drag (works for mouse + touch)
     img.style.touchAction = "none"; // prevent default touch scrolling
@@ -48,6 +65,17 @@ function createIngredientTray() {
   });
 }
 
+function displayRequiredIngredients() {
+  requiredIngredientsEl.innerHTML = "";
+  const ingredients = dishes[currentOrder];
+  ingredients.forEach(ingredient => {
+    const span = document.createElement("span");
+    span.textContent = ingredient.replace(/_/g, " ");
+    span.className = "required-ingredient";
+    requiredIngredientsEl.appendChild(span);
+  });
+}
+
 // Variables for dragging
 let dragItem = null;
 let offsetX = 0;
@@ -55,18 +83,21 @@ let offsetY = 0;
 
 function pointerDown(e) {
   e.preventDefault();
-  dragItem = e.target;
+  const originalItem = e.target;
   soundDrag.currentTime = 0;
   soundDrag.play();
 
+  // Clone the ingredient for dragging
+  dragItem = originalItem.cloneNode(true);
+  dragItem.style.position = "fixed";
+  dragItem.style.zIndex = 1000;
+  document.body.appendChild(dragItem);
+
   // Calculate offset between pointer and element top-left corner
-  const rect = dragItem.getBoundingClientRect();
+  const rect = originalItem.getBoundingClientRect();
   offsetX = e.clientX - rect.left;
   offsetY = e.clientY - rect.top;
 
-  // Bring dragged element on top
-  dragItem.style.position = "fixed";
-  dragItem.style.zIndex = 1000;
   moveAt(e.clientX, e.clientY);
 
   document.addEventListener("pointermove", pointerMove);
@@ -119,12 +150,8 @@ function pointerUp(e) {
     }
   }
 
-  // Reset dragged ingredient position back to tray
-  dragItem.style.position = "relative";
-  dragItem.style.left = "";
-  dragItem.style.top = "";
-  dragItem.style.zIndex = "";
-
+  // Remove the dragged clone
+  document.body.removeChild(dragItem);
   dragItem = null;
   document.removeEventListener("pointermove", pointerMove);
   document.removeEventListener("pointerup", pointerUp);
@@ -137,6 +164,8 @@ function newOrder() {
   orderBubble.textContent = randomDish;
   customerFace.src = "assets/ui/customer_neutral.png";
   resetPlate();
+  createIngredientTray(); // Recreate tray with randomized ingredients
+  displayRequiredIngredients(); // Show required ingredients
 }
 
 function resetPlate() {
@@ -189,7 +218,16 @@ function endGame(won) {
   clearInterval(timerInterval);
   gameOverScreen.style.display = "flex";
   finalScoreEl.textContent = score;
-  gameResultEl.textContent = won ? "You Win! 🏆" : "Time's Up!";
+  if (won) {
+    const dishesList = Object.keys(foodHistories);
+    const randomDish = dishesList[Math.floor(Math.random() * dishesList.length)];
+    gameResultEl.textContent = `History of ${randomDish}`;
+    const historyText = document.createElement("p");
+    historyText.textContent = foodHistories[randomDish];
+    gameResultEl.appendChild(historyText);
+  } else {
+    gameResultEl.textContent = "Time's Up!";
+  }
   soundEnd.play();
 }
 
