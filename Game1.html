@@ -2,23 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>404 - Page Not Found</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hawker Stall Game</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen text-center px-6">
-  
-  <img src="work.png" alt="Work in Progress" class="w-64 h-64 object-contain mb-6" />
-  
-  <h1 class="text-4xl font-bold text-red-600 mb-4">404 - Page Not Found</h1>
-  <p class="text-xl text-gray-800">
-    ITE College West - 2025 Student Leaders Forum Team work in progress
-  </p>
+<body>
+  <div class="game-container">
+    <header>
+      <h1>🍴 Hawker Stall Game</h1>
+      <div class="stats">
+        <span>💰 Cash: $<span id="score">0</span></span>
+        <span>⏰ Time: <span id="timer">5:00</span></span>
+      </div>
+    </header>
 
-  <a href="index.html" class="mt-8 inline-block bg-red-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-red-700 transition">
-    Go Back Home
-  </a>
+    <div class="customer-area">
+      <img id="customer-face" src="assets/ui/customer_neutral.png" alt="Customer" />
+      <div class="order-bubble" id="order-bubble">Loading...</div>
+    </div>
 
+    <div class="prep-area">
+      <div class="ingredients" id="ingredient-tray"></div>
+
+      <div class="plate-area" id="plate-area">
+        <img src="assets/ui/plate.png" alt="Plate" />
+        <div class="dropped-ingredients" id="dropped-ingredients"></div>
+      </div>
+
+      <button id="serve-button" style="display: none;">Serve</button>
+    </div>
+
+    <div class="overlay" id="game-over">
+      <div class="overlay-content">
+        <h2 id="game-result">Game Over</h2>
+        <p>Your earnings: $<span id="final-score">0</span></p>
+        <button onclick="window.location.reload()">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sound elements -->
+  <audio id="sound-drag" src="assets/sounds/drag.mp3" preload="auto"></audio>
+  <audio id="sound-correct" src="assets/sounds/correct.mp3" preload="auto"></audio>
+  <audio id="sound-wrong" src="assets/sounds/wrong.mp3" preload="auto"></audio>
+  <audio id="sound-end" src="assets/sounds/end.mp3" preload="auto"></audio>
+
+  <script src="script.js"></script>
 </body>
 </html>
-
