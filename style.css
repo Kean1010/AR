@@ -1,0 +1,212 @@
+/* Base styles */
+
+body {
+  font-family: Arial, sans-serif;
+  background: url('assets/ui/background.jpg') center/cover no-repeat;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  margin: 0;
+}
+
+.game-container {
+  max-width: 1000px;
+  margin: auto;
+  padding: 20px;
+  background: rgba(255, 248, 225, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 0 20px #aaa;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stats span {
+  font-size: 1.2rem;
+  margin-left: 20px;
+}
+
+.customer-area {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.customer-area img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+}
+
+.order-bubble {
+  background: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: 2px solid #000;
+  font-weight: bold;
+  margin-left: 20px;
+  transition: all 0.3s ease;
+  min-width: 130px;
+  text-align: center;
+}
+
+.prep-area {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 30px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.ingredients {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: 300px;
+}
+
+.ingredient {
+  width: 80px;
+  cursor: grab;
+  transition: transform 0.2s ease;
+}
+
+.ingredient:hover {
+  transform: scale(1.1);
+}
+
+.plate-area {
+  position: relative;
+  width: 250px;
+  min-height: 250px;
+}
+
+.plate-area img {
+  width: 100%;
+  display: block;
+}
+
+.dropped-ingredients {
+  position: absolute;
+  top: 10%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+
+.dropped-ingredients img {
+  width: 40px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.dropped-ingredients img:hover {
+  transform: scale(1.1);
+}
+
+#serve-button {
+  padding: 10px 20px;
+  font-size: 18px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#serve-button:active {
+  transform: scale(0.95);
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.overlay-content {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.overlay-content h2 {
+  font-size: 2rem;
+}
+
+/* Responsive Mobile Layout */
+
+@media (max-width: 600px) {
+  .game-container {
+    padding: 10px;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .stats {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .customer-area {
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .prep-area {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ingredients {
+    max-width: 100%;
+    justify-content: center;
+  }
+
+  .plate-area {
+    width: 200px;
+    min-height: 200px;
+  }
+
+  .ingredient {
+    width: 60px;
+  }
+
+  .dropped-ingredients img {
+    width: 30px;
+  }
+
+  #serve-button {
+    font-size: 16px;
+    padding: 10px 16px;
+  }
+}
