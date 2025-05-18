@@ -45,7 +45,7 @@ header {
   object-fit: contain;
 }
 
-.order-bubble {
+#order-bubble {
   background: #fff;
   padding: 10px 20px;
   border-radius: 20px;
@@ -55,8 +55,35 @@ header {
   transition: all 0.3s ease;
   min-width: 130px;
   text-align: center;
+  font-size: 20px; /* Increased text size */
+  position: relative; /* Required for positioning the tail */
+  color: #000; /* Ensure text color is defined */
 }
 
+/* Speech bubble tail */
+#order-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px; /* Adjust based on tail size */
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 10px 10px 0 10px;
+  border-style: solid;
+  border-color: #fff transparent transparent transparent;
+}
+
+/* Border for the tail */
+#order-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -12px; /* Slightly larger for border effect */
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 11px 11px 0 11px;
+  border-style: solid;
+  border-color: #000 transparent transparent transparent;
+  z-index: -1;
+}
 .prep-area {
   display: flex;
   justify-content: center;
